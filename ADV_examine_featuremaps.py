@@ -87,7 +87,7 @@ def main():
                         file=stats_file)
             print('=====================================================', file=stats_file)
 
-        labels = ['1', '66', '132', '197'] if 'densenet' in str(run_dir) else ['1', '7', '15', '27', '33']
+        labels = ['1', '34', '67', '99'] if 'densenet' in str(run_dir) else ['1', '7', '15', '27', '33']
 
         configs = [('adv', [f'clean_{adv_type}' for adv_type in adv_types] +
                     [f'adv_{adv_type}' for adv_type in adv_types], 500),

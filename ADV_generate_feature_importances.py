@@ -40,7 +40,7 @@ def main():
             plot_filename = f'{latent_prefix}layer_importances.png'
             plot_file = args.runs_dir / dir_name / plot_filename
             fig, ax = plt.subplots(FIGURE_ROWS, len(adv_types) // FIGURE_ROWS, figsize=FIGURE_SIZE)
-            labels = ['1', '66', '132', '197'] if model == 'densenet' else ['1', '7', '15', '27', '33']
+            labels = ['1', '34', '67', '99'] if model == 'densenet' else ['1', '7', '15', '27', '33']
             xs = np.arange(num_layers)
             color_iter = iter(seaborn.color_palette())
             for k, adv_type in enumerate(adv_types):

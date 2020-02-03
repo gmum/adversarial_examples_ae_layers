@@ -127,7 +127,7 @@ def main():
     # plot
     plot_filename = f'{str(run_dir)}/adv_visualize.png'
     kde_plot_filename = f'{str(run_dir)}/adv_visualize_kde.png'
-    labels = ['1', '66', '132', '197'] if 'densenet' in str(run_dir) else ['1', '7', '15', '27', '33']
+    labels = ['1', '34', '67', '99'] if 'densenet' in str(run_dir) else ['1', '7', '15', '27', '33']
     fig, ax = plt.subplots(len(ae_models), len(adv_types), figsize=(16 * len(adv_types), 9 * len(labels)))
     kde_fig, kde_ax = plt.subplots(len(ae_models), len(adv_types), figsize=(16 * len(adv_types), 9 * len(labels)))
     clean_samples = 250
