@@ -19,16 +19,16 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #done
 #=================================================================================================================
 #for aetype in waegan wae vae ae
-for aetype in wae
-do
-  for model in resnet densenet
-  do
-    for dataset in cifar10 cifar100 svhn
-    do
-      python -u /home/bwojcik/vae_layers_detector/ADV_train_featuremaps_AE.py --dataset $dataset --dataroot /mnt/users/bwojcik/local/.datasets --net_type $model --ae_type $aetype
-    done
-  done
-done
+#for aetype in wae
+#do
+#  for model in resnet densenet
+#  do
+#    for dataset in cifar10 cifar100 svhn
+#    do
+#      python -u /home/bwojcik/vae_layers_detector/ADV_train_featuremaps_AE.py --dataset $dataset --dataroot /mnt/users/bwojcik/local/.datasets --net_type $model --ae_type $aetype
+#    done
+#  done
+#done
 #=================================================================================================================
 # train final detector with mean and stddev
 # latent supervised

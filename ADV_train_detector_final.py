@@ -16,7 +16,7 @@ from scorings import score_func
 
 adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2']
 
-N_JOBS = 40
+N_JOBS = 20
 
 
 def main():
@@ -321,19 +321,19 @@ def main():
             if is_supervised:
                 # known
                 res = np.array([results[i][f'acc_known_{adv_type}'] for i in range(args.runs)])
-                print(f'Acc on {adv_type}(known): {res.mean()} +/- {res.std(ddof=1)}')
+                print(f'Acc on {adv_type}(known): {res.mean()} +/- {res.std(ddof=1)}', file=results_file)
                 res = np.array([results[i][f'auroc_known_{adv_type}'] for i in range(args.runs)])
-                print(f'AUROC on {adv_type}(known): {res.mean()} +/- {res.std(ddof=1)}')
+                print(f'AUROC on {adv_type}(known): {res.mean()} +/- {res.std(ddof=1)}', file=results_file)
                 # unknown
                 res = np.array([results[i][f'acc_unknown_{adv_type}'] for i in range(args.runs)])
-                print(f'Acc on {adv_type}(unknown): {res.mean()} +/- {res.std(ddof=1)}')
+                print(f'Acc on {adv_type}(unknown): {res.mean()} +/- {res.std(ddof=1)}', file=results_file)
                 res = np.array([results[i][f'auroc_unknown_{adv_type}'] for i in range(args.runs)])
-                print(f'AUROC on {adv_type}(unknown): {res.mean()} +/- {res.std(ddof=1)}')
+                print(f'AUROC on {adv_type}(unknown): {res.mean()} +/- {res.std(ddof=1)}', file=results_file)
             else:
                 res = np.array([results[i][f'acc_{adv_type}'] for i in range(args.runs)])
-                print(f'Acc on {adv_type}: {res.mean()} +/- {res.std(ddof=1)}')
+                print(f'Acc on {adv_type}: {res.mean()} +/- {res.std(ddof=1)}', file=results_file)
                 res = np.array([results[i][f'auroc_{adv_type}'] for i in range(args.runs)])
-                print(f'AUROC on {adv_type}: {res.mean()} +/- {res.std(ddof=1)}')
+                print(f'AUROC on {adv_type}: {res.mean()} +/- {res.std(ddof=1)}', file=results_file)
 
 
 if __name__ == '__main__':
