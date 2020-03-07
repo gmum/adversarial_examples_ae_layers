@@ -16,8 +16,6 @@ from scorings import score_func
 
 adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2']
 
-N_JOBS = 20
-
 
 def main():
     unsupervised_models = ['OCSVM', 'IF']
@@ -103,7 +101,8 @@ def main():
         ]
 
     run_dir_name = args.run_dir
-    latent_prefix = 'latent_' if args.latent else ''
+    name_prefix = 'latent_' if args.latent else ''
+    name_prefix += 'rec_error_' if args.rec_error else ''
 
     dataset_names = ['train']
     for adv_type in adv_types:
@@ -122,9 +121,15 @@ def main():
         datasets = {}
         for name in dataset_names:
             if args.latent:
-                dataset_path = run_dir / f'latent_{name}.npy'
+                if args.rec_error:
+                    dataset_path = run_dir / f'rec_ae_latent_{name}.npy'
+                else:
+                    dataset_path = run_dir / f'latent_{name}.npy'
             else:
-                dataset_path = run_dir / f'ae_encoded_{name}.npy'
+                if args.rec_error:
+                    dataset_path = run_dir / f'rec_ae_encoded_{name}.npy'
+                else:
+                    dataset_path = run_dir / f'ae_encoded_{name}.npy'
             if dataset_path.exists():
                 datasets[name] = np.load(str(dataset_path))
             else:
@@ -135,11 +140,11 @@ def main():
         # for unsupervised we train on entire training data(! - change if needed) and test on clean/adv/noisy
         if is_supervised:
             # "known" part
-            results_filename = f'{run_name}/{latent_prefix}results_{args.model}_known.txt'
+            results_filename = f'{run_name}/{name_prefix}results_{args.model}_known.txt'
             if not Path(results_filename).exists():
                 with open(results_filename, 'x') as results_file:
                     for adv_type in adv_types:
-                        model_filename = f'{run_name}/{latent_prefix}final_cv_{args.model}_known_{adv_type}.joblib'
+                        model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}_known_{adv_type}.joblib'
                         train_split = 0.1
                         train_size = int(train_split * len(datasets[f'clean_{adv_type}']))
                         test_size = len(datasets[f'clean_{adv_type}']) - train_size
@@ -164,7 +169,7 @@ def main():
                             np.ones(test_size),
                         ])
                         # train
-                        with parallel_backend('loky', n_jobs=N_JOBS):
+                        with parallel_backend('loky', n_jobs=args.jobs):
                             gs = GridSearchCV(pipeline, params,
                                               scoring=make_scorer(roc_auc_score, needs_threshold=True),
                                               cv=StratifiedKFold(5), verbose=1)
@@ -192,10 +197,10 @@ def main():
                         print(f'AUROC on {adv_type}: {auroc}', file=results_file)
                         results[run_n][f'auroc_known_{adv_type}'] = auroc
             # "unknown/FGSM" part
-            results_filename = f'{run_name}/{latent_prefix}results_{args.model}_unknown.txt'
+            results_filename = f'{run_name}/{name_prefix}results_{args.model}_unknown.txt'
             if not Path(results_filename).exists():
                 with open(results_filename, 'x') as results_file:
-                    model_filename = f'{run_name}/{latent_prefix}final_cv_{args.model}_unknown.joblib'
+                    model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}_unknown.joblib'
                     # train on FGSM
                     train_split = 0.1
                     train_size = int(train_split * len(datasets[f'clean_{adv_types[0]}']))
@@ -221,7 +226,7 @@ def main():
                         np.ones(test_size),
                     ])
                     # train
-                    with parallel_backend('loky', n_jobs=N_JOBS):
+                    with parallel_backend('loky', n_jobs=args.jobs):
                         gs = GridSearchCV(pipeline, params, scoring=make_scorer(roc_auc_score, needs_threshold=True),
                                           cv=StratifiedKFold(5), verbose=1)
                         gs.fit(X, y)
@@ -275,14 +280,14 @@ def main():
                         print(f'AUROC on {adv_type}: {auroc}', file=results_file)
                         results[run_n][f'auroc_unknown_{adv_type}'] = auroc
         else:
-            model_filename = f'{run_name}/{latent_prefix}final_cv_{args.model}.joblib'
-            results_filename = f'{run_name}/{latent_prefix}results_{args.model}.txt'
+            model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}.joblib'
+            results_filename = f'{run_name}/{name_prefix}results_{args.model}.txt'
             if not Path(model_filename).exists():
                 # use only train dataset for one-class classifiers
                 X = datasets[f'train']
                 train_size = len(X)
                 y = np.ones(train_size)
-                with parallel_backend('loky', n_jobs=N_JOBS):
+                with parallel_backend('loky', n_jobs=args.jobs):
                     gs = GridSearchCV(pipeline, params, scoring=make_scorer(score_func, greater_is_better=False), cv=5,
                                       verbose=1)
                     gs.fit(X, y)
@@ -315,7 +320,7 @@ def main():
                         results[run_n][f'acc_{adv_type}'] = acc
                         print(f'AUROC on {adv_type}: {auroc}', file=results_file)
                         results[run_n][f'auroc_{adv_type}'] = auroc
-    results_filename = f'{latent_prefix}{run_dir_name}_{args.model}.txt'
+    results_filename = f'{name_prefix}{run_dir_name}_{args.model}.txt'
     with open(results_filename, 'x') as results_file:
         for adv_type in adv_types:
             if is_supervised:
@@ -341,9 +346,11 @@ if __name__ == '__main__':
     parser.add_argument('run_dir', type=str)
     parser.add_argument('--gpu', type=int, default=0, help='gpu index')
     parser.add_argument('--model', default='SVC', help='LR | SVC | OneClassSVM | IsolationForest')
-    parser.add_argument('--latent', action='store_true', help='Train model on the whole latent representation')
+    parser.add_argument('--latent', action='store_true', help='train model on the whole latent representation')
+    parser.add_argument('--rec_error', action='store_true', help='train model on the reconstruction error AE instead')
     # parser.add_argument('--outliers', type=int, default=5, help='desired proportion (percent) of outliers in the trainset')
     parser.add_argument('--runs', default=5, help='number of runs')
+    parser.add_argument('--jobs', default=20, help='number of joblib jobs')
     args = parser.parse_args()
     print(args)
     main()
