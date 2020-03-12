@@ -103,6 +103,7 @@ def main():
     run_dir_name = args.run_dir
     name_prefix = 'latent_' if args.latent else ''
     name_prefix += 'rec_error_' if args.rec_error else ''
+    name_prefix += 'both_' if args.both else ''
 
     dataset_names = ['train']
     for adv_type in adv_types:
@@ -123,17 +124,29 @@ def main():
             if args.latent:
                 if args.rec_error:
                     dataset_path = run_dir / f'rec_ae_latent_{name}.npy'
+                elif args.both:
+                    dataset_path = [run_dir / f'rec_ae_latent_{name}.npy', run_dir / f'latent_{name}.npy']
                 else:
                     dataset_path = run_dir / f'latent_{name}.npy'
             else:
                 if args.rec_error:
                     dataset_path = run_dir / f'rec_ae_encoded_{name}.npy'
+                elif args.both:
+                    dataset_path = [run_dir / f'rec_ae_encoded_{name}.npy', run_dir / f'ae_encoded_{name}.npy']
                 else:
                     dataset_path = run_dir / f'ae_encoded_{name}.npy'
-            if dataset_path.exists():
-                datasets[name] = np.load(str(dataset_path))
+            if isinstance(dataset_path, Path):
+                if dataset_path.exists():
+                    datasets[name] = np.load(str(dataset_path))
+                else:
+                    print(f'{dataset_path} is missing!')
             else:
-                print(f'{dataset_path} is missing!')
+                datasets[name] = []
+                for path in dataset_path:
+                    assert path.exists(), f'{path} is missing!'
+                    datasets[name].append(np.load(str(path)))
+                datasets[name] = np.concatenate(datasets[name], axis=1)
+
 
         # for supervised we consider two setups - "known attack" (left half of table 3 from "A Simple Unified Framework...")
         # and "unknown attack" where we train only on FGSM and validate on the rest
@@ -347,7 +360,9 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', type=int, default=0, help='gpu index')
     parser.add_argument('--model', default='SVC', help='LR | SVC | OneClassSVM | IsolationForest')
     parser.add_argument('--latent', action='store_true', help='train model on the whole latent representation')
-    parser.add_argument('--rec_error', action='store_true', help='train model on the reconstruction error AE instead')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--rec_error', action='store_true', help='train model on the reconstruction error AE instead')
+    group.add_argument('--both', action='store_true', help='train model on both AEs')
     # parser.add_argument('--outliers', type=int, default=5, help='desired proportion (percent) of outliers in the trainset')
     parser.add_argument('--runs', default=5, help='number of runs')
     parser.add_argument('--jobs', default=20, help='number of joblib jobs')

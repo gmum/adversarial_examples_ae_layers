@@ -10,6 +10,7 @@ parser.add_argument('--classifier_type', default='SVC')
 parser.add_argument('--metric', default='AUROC', help="AUROC | Accuracy")
 parser.add_argument('--ae_type', default='vae')
 parser.add_argument('--latent', action='store_true')
+parser.add_argument('--rec_error', action='store_true')
 args = parser.parse_args()
 
 models = ['densenet', 'resnet']
@@ -19,7 +20,8 @@ approaches = ['known', 'unknown']
 
 
 def main():
-    latent_prefix = 'latent_' if args.latent else ''
+    name_prefix = 'latent_' if args.latent else ''
+    name_prefix += 'rec_error_' if args.rec_error else ''
     unsupervised = True if args.classifier_type in ['IF', 'OCSVM'] else False
     # read in results
     results = {}
@@ -32,7 +34,7 @@ def main():
                         break
                 else:
                     raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
-                file_name = f'{latent_prefix}results_{args.classifier_type}.txt'
+                file_name = f'{name_prefix}results_{args.classifier_type}.txt'
                 file = args.runs_dir / dir_name / file_name
                 file_contents = file.read_text()
                 for adv_type in adv_types:
@@ -48,7 +50,7 @@ def main():
                             break
                     else:
                         raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
-                    file_name = f'{latent_prefix}results_{args.classifier_type}_{approach}.txt'
+                    file_name = f'{name_prefix}results_{args.classifier_type}_{approach}.txt'
                     file = args.runs_dir / dir_name / file_name
                     file_contents = file.read_text()
                     for adv_type in adv_types:
