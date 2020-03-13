@@ -2,6 +2,7 @@ import argparse
 import re
 from pathlib import Path
 
+import sys
 from tabulate import tabulate
 
 parser = argparse.ArgumentParser()
@@ -10,7 +11,9 @@ parser.add_argument('--classifier_type', default='SVC')
 parser.add_argument('--metric', default='AUROC', help="AUROC | Accuracy")
 parser.add_argument('--ae_type', default='vae')
 parser.add_argument('--latent', action='store_true')
-parser.add_argument('--rec_error', action='store_true')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--rec_error', action='store_true', help='train model on the reconstruction error AE instead')
+group.add_argument('--both', action='store_true', help='train model on both AEs')
 args = parser.parse_args()
 
 models = ['densenet', 'resnet']
@@ -20,43 +23,61 @@ approaches = ['known', 'unknown']
 
 
 def main():
+    print(args, file=sys.stderr)
     name_prefix = 'latent_' if args.latent else ''
     name_prefix += 'rec_error_' if args.rec_error else ''
+    name_prefix += 'both_' if args.both else ''
     unsupervised = True if args.classifier_type in ['IF', 'OCSVM'] else False
     # read in results
     results = {}
+    results_stderr = {}
     if unsupervised:
         for model in models:
             for dataset in datasets:
                 for file in args.runs_dir.iterdir():
-                    if re.match(f'{dataset}_{model}_deep_{args.ae_type}_(.*)', file.name):
-                        dir_name = file.name
+                    pattern = f'{name_prefix}{dataset}_{model}_deep_{args.ae_type}_(.*)_{args.classifier_type}\.txt'
+                    if re.match(pattern, file.name):
+                        file_name = file.name
                         break
                 else:
+                    print(f'args.classifier_type: {args.classifier_type}', file=sys.stderr)
+                    for file in args.runs_dir.iterdir():
+                        if re.match(f'{name_prefix}{dataset}.*', file.name):
+                            print(file.name, file=sys.stderr)
                     raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
-                file_name = f'{name_prefix}results_{args.classifier_type}.txt'
-                file = args.runs_dir / dir_name / file_name
+                file = args.runs_dir / file_name
+                assert file.exists()
                 file_contents = file.read_text()
+                print(f'file_contents: {file_contents}', file=sys.stderr)
                 for adv_type in adv_types:
-                    result = float(re.search(f'{args.metric} on {adv_type}: (.*)', file_contents)[1])
-                    results[f'{model}_{dataset}_{adv_type}'] = result
+                    pattern = f'{args.metric} on {adv_type}: (.*?) \+/- (.*?)\n'
+                    print(f'pattern: {pattern}', file=sys.stderr)
+                    matches = re.search(pattern, file_contents)
+                    results[f'{model}_{dataset}_{adv_type}'] = float(matches.group(1))
+                    results_stderr[f'{model}_{dataset}_{adv_type}'] = float(matches.group(2))
     else:
         for approach in approaches:
             for model in models:
                 for dataset in datasets:
                     for file in args.runs_dir.iterdir():
-                        if re.match(f'{dataset}_{model}_deep_{args.ae_type}_(.*)', file.name):
-                            dir_name = file.name
+                        pattern = f'{name_prefix}{dataset}_{model}_deep_{args.ae_type}_(.*)_{args.classifier_type}\.txt'
+                        if re.match(pattern, file.name):
+                            file_name = file.name
                             break
                     else:
+                        print(f'approach: {approach} args.classifier_type: {args.classifier_type}', file=sys.stderr)
+                        for file in args.runs_dir.iterdir():
+                            if re.match(f'{name_prefix}{dataset}.*', file.name):
+                                print(file.name, file=sys.stderr)
                         raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
-                    file_name = f'{name_prefix}results_{args.classifier_type}_{approach}.txt'
-                    file = args.runs_dir / dir_name / file_name
+                    file = args.runs_dir / file_name
+                    assert file.exists()
                     file_contents = file.read_text()
                     for adv_type in adv_types:
-                        result = float(re.search(f'{args.metric} on {adv_type}: (.*)', file_contents)[1])
-                        results[f'{model}_{dataset}_{adv_type}_{approach}'] = result
-
+                        matches = re.search(f'{args.metric} on {adv_type}\({approach}\): (.*?) \+/- (.*?)\n', file_contents)
+                        key = f'{model}_{dataset}_{adv_type}_{approach}'
+                        results[key] = float(matches.group(1))
+                        results_stderr[key] = float(matches.group(2))
     # display a table/something
     best_results = {}
     # ==================================
@@ -128,9 +149,11 @@ def main():
                     key_compare = f'{model}_{dataset}_{adv_type}_unknown'
                     if results[key] > best_results[key_compare]:
                         better_counter += 1
-                        row.append(f'{results[key]:.4f}!')
+                        better = '!'
                     else:
-                        row.append(f'{results[key]:.4f}')
+                        better = ''
+                    row_content = f'{results[key]:.4f}{better} +/- {results_stderr[key]:.4f}'
+                    row.append(row_content)
             else:
                 for approach in approaches:
                     for adv_type in adv_types:
@@ -139,9 +162,11 @@ def main():
                         key = f'{model}_{dataset}_{adv_type}_{approach}'
                         if results[key] > best_results[key]:
                             better_counter += 1
-                            row.append(f'{results[key]:.4f}!')
+                            better = '!'
                         else:
-                            row.append(f'{results[key]:.4f}')
+                            better = ''
+                        row_content = f'{results[key]:.4f}{better} +/- {results_stderr[key]:.4f}'
+                        row.append(row_content)
             rows.append(row)
     print(tabulate(rows, headers='firstrow'))
     print(f'Better results count: {better_counter}')

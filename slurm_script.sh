@@ -70,29 +70,29 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #=================================================================================================================
 # train final detector with mean and stddev on rec_error AE data
 # latent supervised
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-# reduced supervised
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-# reduced unsupervised
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --latent --model SVC svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+## reduced supervised
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model LR svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+## reduced unsupervised
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both --model IF svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
 #=================================================================================================================
 #for ae_type in waegan wae vae ae
 #do
@@ -116,23 +116,23 @@ python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --both -
 #  done
 #done
 #=================================================================================================================
-#cd ..
-#for ae_type in waegan wae vae ae; do
-#    echo $ae_type >>results.txt;
-#    echo $ae_type >>latent_results.txt;
-#    for type in SVC LSVC LR RF GB OCSVM IF; do
-#     echo $type >>results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>results.txt;
-#     echo $type >>latent_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --latent --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>latent_results.txt;
-#    done
-#done
-#=================================================================================================================
 cd ..
+for ae_type in waegan wae vae ae; do
+    echo $ae_type >>results.txt;
+    echo $ae_type >>latent_results.txt;
+    for type in SVC LSVC LR RF GB OCSVM IF; do
+     echo $type >>results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>results.txt;
+     echo $type >>latent_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --latent --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>latent_results.txt;
+    done
+done
+#=================================================================================================================
+#cd ..
 for ae_type in wae; do
-    echo $ae_type >>rec_results.txt;
-    echo $ae_type >>rec_latent_results.txt;
+    echo $ae_type >>both_results.txt;
+    echo $ae_type >>both_latent_results.txt;
     for type in SVC LR IF; do
-     echo $type >>rec_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --rec_error --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>rec_results.txt;
-     echo $type >>rec_latent_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --rec_error --latent --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>rec_latent_results.txt;
+     echo $type >>both_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --both --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>both_results.txt;
+     echo $type >>both_latent_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --both --latent --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>both_latent_results.txt;
     done
 done
 #=================================================================================================================
