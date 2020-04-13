@@ -18,7 +18,7 @@ args = parser.parse_args()
 
 models = ['densenet', 'resnet']
 datasets = ['cifar10', 'cifar100', 'svhn']
-adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2']
+adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100']
 approaches = ['known', 'unknown']
 
 
@@ -136,6 +136,21 @@ def main():
     best_results['resnet_cifar10_CWL2_unknown'] = 0.9390
     best_results['resnet_cifar100_CWL2_unknown'] = 0.9096
     best_results['resnet_svhn_CWL2_unknown'] = 0.8673
+    # ==================================
+    # ==================================
+    best_results['densenet_cifar10_PGD100_known'] = 0.0
+    best_results['densenet_cifar100_PGD100_known'] = 0.0
+    best_results['densenet_svhn_PGD100_known'] = 0.0
+    best_results['resnet_cifar10_PGD100_known'] = 0.0
+    best_results['resnet_cifar100_PGD100_known'] = 0.0
+    best_results['resnet_svhn_PGD100_known'] = 0.0
+    # ==================================
+    best_results['densenet_cifar10_PGD100_unknown'] = 0.0
+    best_results['densenet_cifar100_PGD100_unknown'] = 0.0
+    best_results['densenet_svhn_PGD100_unknown'] = 0.0
+    best_results['resnet_cifar10_PGD100_unknown'] = 0.0
+    best_results['resnet_cifar100_PGD100_unknown'] = 0.0
+    best_results['resnet_svhn_PGD100_unknown'] = 0.0
     # ==================================
     rows = []
     rows.append(['model', 'dataset'] + adv_types + adv_types[1:])

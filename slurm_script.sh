@@ -127,14 +127,14 @@ for ae_type in waegan wae vae ae; do
 done
 #=================================================================================================================
 #cd ..
-for ae_type in wae; do
-    echo $ae_type >>both_results.txt;
-    echo $ae_type >>both_latent_results.txt;
-    for type in SVC LR IF; do
-     echo $type >>both_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --both --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>both_results.txt;
-     echo $type >>both_latent_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --both --latent --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>both_latent_results.txt;
-    done
-done
+#for ae_type in wae; do
+#    echo $ae_type >>both_results.txt;
+#    echo $ae_type >>both_latent_results.txt;
+#    for type in SVC LR IF; do
+#     echo $type >>both_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --both --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>both_results.txt;
+#     echo $type >>both_latent_results.txt; python /home/bwojcik/vae_layers_detector/ADV_generate_table3.py --both --latent --ae_type $ae_type --classifier_type $type vae_layers_detector/ >>both_latent_results.txt;
+#    done
+#done
 #=================================================================================================================
 #for ae_type in wae ae waegan vae; do
 #    python -u /home/bwojcik/vae_layers_detector/ADV_generate_feature_importances.py --latent --ae_type $ae_type /mnt/users/bwojcik/local/vae_layers_detector
@@ -150,3 +150,40 @@ done
 #done
 #=================================================================================================================
 #python -u /home/bwojcik/vae_layers_detector/ADV_examine_featuremaps.py
+#=================================================================================================================
+#for model in resnet densenet; do
+#  for dataset in cifar10 cifar100 svhn; do
+#    for adv in PGD100; do
+#      python /home/bwojcik/vae_layers_detector/ADV_Samples.py --dataset $dataset --net_type $model --adv_type $adv
+#    done
+#  done
+#done
+#=================================================================================================================
+# rerun for PGD100
+#RUNS=5
+## train final detector with mean and stddev
+## latent supervised
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --latent --model SVC cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --latent --model SVC cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --latent --model SVC svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --latent --model SVC cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --latent --model SVC cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --latent --model SVC svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+## reduced supervised
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model LR cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model LR cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model LR svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model LR cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model LR cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model LR svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+## reduced unsupervised
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model IF cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model IF cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model IF svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model IF cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model IF cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --runs $RUNS --model IF svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+#=================================================================================================================

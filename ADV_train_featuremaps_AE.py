@@ -110,7 +110,7 @@ def main():
     train_loader, test_loader = data_loader.getTargetDataSet(args.dataset, args.batch_size, in_transform, args.dataroot)
     test_clean_data, test_adv_data, test_noisy_data, test_label = {}, {}, {}, {}
     clean_loaders, adv_loaders, noisy_loaders = {}, {}, {}
-    adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2']
+    adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100']
     for adv_type in adv_types:
         test_clean_data[adv_type] = torch.load(
             args.outf + 'clean_data_%s_%s_%s.pth' % (args.net_type, args.dataset, adv_type))

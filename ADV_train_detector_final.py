@@ -14,7 +14,7 @@ from sklearn.svm import OneClassSVM, SVC, LinearSVC
 
 from scorings import score_func
 
-adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2']
+adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100']
 
 
 def main():
@@ -154,33 +154,33 @@ def main():
         if is_supervised:
             # "known" part
             results_filename = f'{run_name}/{name_prefix}results_{args.model}_known.txt'
-            if not Path(results_filename).exists():
-                with open(results_filename, 'x') as results_file:
-                    for adv_type in adv_types:
-                        model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}_known_{adv_type}.joblib'
-                        train_split = 0.1
-                        train_size = int(train_split * len(datasets[f'clean_{adv_type}']))
-                        test_size = len(datasets[f'clean_{adv_type}']) - train_size
-                        X = np.concatenate([
-                            datasets[f'clean_{adv_type}'][:train_size],
-                            datasets[f'adv_{adv_type}'][:train_size],
-                            datasets[f'noisy_{adv_type}'][:train_size],
-                        ])
-                        y = np.concatenate([
-                            np.ones(train_size),
-                            np.zeros(train_size),
-                            np.ones(train_size),
-                        ])
-                        X_test = np.concatenate([
-                            datasets[f'clean_{adv_type}'][train_size:],
-                            datasets[f'adv_{adv_type}'][train_size:],
-                            datasets[f'noisy_{adv_type}'][train_size:],
-                        ])
-                        y_test = np.concatenate([
-                            np.ones(test_size),
-                            np.zeros(test_size),
-                            np.ones(test_size),
-                        ])
+            with open(results_filename, 'w') as results_file:
+                for adv_type in adv_types:
+                    model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}_known_{adv_type}.joblib'
+                    train_split = 0.1
+                    train_size = int(train_split * len(datasets[f'clean_{adv_type}']))
+                    test_size = len(datasets[f'clean_{adv_type}']) - train_size
+                    X = np.concatenate([
+                        datasets[f'clean_{adv_type}'][:train_size],
+                        datasets[f'adv_{adv_type}'][:train_size],
+                        datasets[f'noisy_{adv_type}'][:train_size],
+                    ])
+                    y = np.concatenate([
+                        np.ones(train_size),
+                        np.zeros(train_size),
+                        np.ones(train_size),
+                    ])
+                    X_test = np.concatenate([
+                        datasets[f'clean_{adv_type}'][train_size:],
+                        datasets[f'adv_{adv_type}'][train_size:],
+                        datasets[f'noisy_{adv_type}'][train_size:],
+                    ])
+                    y_test = np.concatenate([
+                        np.ones(test_size),
+                        np.zeros(test_size),
+                        np.ones(test_size),
+                    ])
+                    if not Path(model_filename).exists():
                         # train
                         with parallel_backend('loky', n_jobs=args.jobs):
                             gs = GridSearchCV(pipeline, params,
@@ -189,69 +189,15 @@ def main():
                             gs.fit(X, y)
                         # save model
                         joblib.dump(gs, model_filename)
-                        print(f'Best params on {adv_type}: {gs.best_params_}', file=results_file)
-                        # print feature importance on Random Forest
-                        if args.model == 'RF':
-                            rf = gs.best_estimator_['clf']
-                            print(f'RF feature importance for {adv_type}: \n {rf.feature_importances_.tolist()}',
-                                  file=results_file)
-                        # validate
-                        y_pred = gs.predict(X_test)
-                        try:
-                            y_scores = gs.decision_function(X_test)
-                        except:
-                            y_scores = gs.predict_proba(X_test)
-                            if y_scores.ndim > 1:
-                                y_scores = y_scores[:, 1]
-                        acc = accuracy_score(y_test, y_pred)
-                        auroc = roc_auc_score(y_test, y_scores)
-                        print(f'Accuracy on {adv_type}: {acc}', file=results_file)
-                        results[run_n][f'acc_known_{adv_type}'] = acc
-                        print(f'AUROC on {adv_type}: {auroc}', file=results_file)
-                        results[run_n][f'auroc_known_{adv_type}'] = auroc
-            # "unknown/FGSM" part
-            results_filename = f'{run_name}/{name_prefix}results_{args.model}_unknown.txt'
-            if not Path(results_filename).exists():
-                with open(results_filename, 'x') as results_file:
-                    model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}_unknown.joblib'
-                    # train on FGSM
-                    train_split = 0.1
-                    train_size = int(train_split * len(datasets[f'clean_{adv_types[0]}']))
-                    test_size = len(datasets[f'clean_{adv_types[0]}']) - train_size
-                    X = np.concatenate([
-                        datasets[f'clean_{adv_types[0]}'][:train_size],
-                        datasets[f'adv_{adv_types[0]}'][:train_size],
-                        datasets[f'noisy_{adv_types[0]}'][:train_size],
-                    ])
-                    y = np.concatenate([
-                        np.ones(train_size),
-                        np.zeros(train_size),
-                        np.ones(train_size),
-                    ])
-                    X_test = np.concatenate([
-                        datasets[f'clean_{adv_types[0]}'][train_size:],
-                        datasets[f'adv_{adv_types[0]}'][train_size:],
-                        datasets[f'noisy_{adv_types[0]}'][train_size:],
-                    ])
-                    y_test = np.concatenate([
-                        np.ones(test_size),
-                        np.zeros(test_size),
-                        np.ones(test_size),
-                    ])
-                    # train
-                    with parallel_backend('loky', n_jobs=args.jobs):
-                        gs = GridSearchCV(pipeline, params, scoring=make_scorer(roc_auc_score, needs_threshold=True),
-                                          cv=StratifiedKFold(5), verbose=1)
-                        gs.fit(X, y)
-                    # save model
-                    print(f'Best params: {gs.best_params_}', file=results_file)
-                    joblib.dump(gs, model_filename)
+                    else:
+                        gs = joblib.load(model_filename)
+                    print(f'Best params on {adv_type}: {gs.best_params_}', file=results_file)
                     # print feature importance on Random Forest
                     if args.model == 'RF':
                         rf = gs.best_estimator_['clf']
-                        print(f'RF feature importance: \n {rf.feature_importances_.tolist()}',
+                        print(f'RF feature importance for {adv_type}: \n {rf.feature_importances_.tolist()}',
                               file=results_file)
-                    # test
+                    # validate
                     y_pred = gs.predict(X_test)
                     try:
                         y_scores = gs.decision_function(X_test)
@@ -261,37 +207,95 @@ def main():
                             y_scores = y_scores[:, 1]
                     acc = accuracy_score(y_test, y_pred)
                     auroc = roc_auc_score(y_test, y_scores)
-                    print(f'Accuracy on {adv_types[0]}: {acc}', file=results_file)
-                    results[run_n][f'acc_unknown_{adv_types[0]}'] = acc
-                    print(f'AUROC on {adv_types[0]}: {auroc}', file=results_file)
-                    results[run_n][f'auroc_unknown_{adv_types[0]}'] = auroc
-                    # and test on the rest
-                    for adv_type in adv_types[1:]:
-                        test_size = len(datasets[f'clean_{adv_type}'])
-                        X_test = np.concatenate([
-                            datasets[f'clean_{adv_type}'],
-                            datasets[f'adv_{adv_type}'],
-                            datasets[f'noisy_{adv_type}'],
-                        ])
-                        y_test = np.concatenate([
-                            np.ones(test_size),
-                            np.zeros(test_size),
-                            np.ones(test_size),
-                        ])
-                        # validate
-                        y_pred = gs.predict(X_test)
-                        try:
-                            y_scores = gs.decision_function(X_test)
-                        except:
-                            y_scores = gs.predict_proba(X_test)
-                            if y_scores.ndim > 1:
-                                y_scores = y_scores[:, 1]
-                        acc = accuracy_score(y_test, y_pred)
-                        auroc = roc_auc_score(y_test, y_scores)
-                        print(f'Accuracy on {adv_type}: {acc}', file=results_file)
-                        results[run_n][f'acc_unknown_{adv_type}'] = acc
-                        print(f'AUROC on {adv_type}: {auroc}', file=results_file)
-                        results[run_n][f'auroc_unknown_{adv_type}'] = auroc
+                    print(f'Accuracy on {adv_type}: {acc}', file=results_file)
+                    results[run_n][f'acc_known_{adv_type}'] = acc
+                    print(f'AUROC on {adv_type}: {auroc}', file=results_file)
+                    results[run_n][f'auroc_known_{adv_type}'] = auroc
+            # "unknown/FGSM" part
+            results_filename = f'{run_name}/{name_prefix}results_{args.model}_unknown.txt'
+            with open(results_filename, 'w') as results_file:
+                model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}_unknown.joblib'
+                # train on FGSM
+                train_split = 0.1
+                train_size = int(train_split * len(datasets[f'clean_{adv_types[0]}']))
+                test_size = len(datasets[f'clean_{adv_types[0]}']) - train_size
+                X = np.concatenate([
+                    datasets[f'clean_{adv_types[0]}'][:train_size],
+                    datasets[f'adv_{adv_types[0]}'][:train_size],
+                    datasets[f'noisy_{adv_types[0]}'][:train_size],
+                ])
+                y = np.concatenate([
+                    np.ones(train_size),
+                    np.zeros(train_size),
+                    np.ones(train_size),
+                ])
+                X_test = np.concatenate([
+                    datasets[f'clean_{adv_types[0]}'][train_size:],
+                    datasets[f'adv_{adv_types[0]}'][train_size:],
+                    datasets[f'noisy_{adv_types[0]}'][train_size:],
+                ])
+                y_test = np.concatenate([
+                    np.ones(test_size),
+                    np.zeros(test_size),
+                    np.ones(test_size),
+                ])
+                if not Path(model_filename).exists():
+                    # train
+                    with parallel_backend('loky', n_jobs=args.jobs):
+                        gs = GridSearchCV(pipeline, params, scoring=make_scorer(roc_auc_score, needs_threshold=True),
+                                          cv=StratifiedKFold(5), verbose=1)
+                        gs.fit(X, y)
+                    # save model
+                    joblib.dump(gs, model_filename)
+                else:
+                    gs = joblib.load(model_filename)
+                print(f'Best params: {gs.best_params_}', file=results_file)
+                # print feature importance on Random Forest
+                if args.model == 'RF':
+                    rf = gs.best_estimator_['clf']
+                    print(f'RF feature importance: \n {rf.feature_importances_.tolist()}',
+                          file=results_file)
+                # test
+                y_pred = gs.predict(X_test)
+                try:
+                    y_scores = gs.decision_function(X_test)
+                except:
+                    y_scores = gs.predict_proba(X_test)
+                    if y_scores.ndim > 1:
+                        y_scores = y_scores[:, 1]
+                acc = accuracy_score(y_test, y_pred)
+                auroc = roc_auc_score(y_test, y_scores)
+                print(f'Accuracy on {adv_types[0]}: {acc}', file=results_file)
+                results[run_n][f'acc_unknown_{adv_types[0]}'] = acc
+                print(f'AUROC on {adv_types[0]}: {auroc}', file=results_file)
+                results[run_n][f'auroc_unknown_{adv_types[0]}'] = auroc
+                # and test on the rest
+                for adv_type in adv_types[1:]:
+                    test_size = len(datasets[f'clean_{adv_type}'])
+                    X_test = np.concatenate([
+                        datasets[f'clean_{adv_type}'],
+                        datasets[f'adv_{adv_type}'],
+                        datasets[f'noisy_{adv_type}'],
+                    ])
+                    y_test = np.concatenate([
+                        np.ones(test_size),
+                        np.zeros(test_size),
+                        np.ones(test_size),
+                    ])
+                    # validate
+                    y_pred = gs.predict(X_test)
+                    try:
+                        y_scores = gs.decision_function(X_test)
+                    except:
+                        y_scores = gs.predict_proba(X_test)
+                        if y_scores.ndim > 1:
+                            y_scores = y_scores[:, 1]
+                    acc = accuracy_score(y_test, y_pred)
+                    auroc = roc_auc_score(y_test, y_scores)
+                    print(f'Accuracy on {adv_type}: {acc}', file=results_file)
+                    results[run_n][f'acc_unknown_{adv_type}'] = acc
+                    print(f'AUROC on {adv_type}: {auroc}', file=results_file)
+                    results[run_n][f'auroc_unknown_{adv_type}'] = auroc
         else:
             model_filename = f'{run_name}/{name_prefix}final_cv_{args.model}.joblib'
             results_filename = f'{run_name}/{name_prefix}results_{args.model}.txt'
@@ -306,35 +310,39 @@ def main():
                     gs.fit(X, y)
                 # save model
                 joblib.dump(gs, model_filename)
-                # save results
-                with open(results_filename, 'w') as results_file:
-                    print(f'Best score: {gs.best_score_}', file=results_file)
-                    print(f'Best params: {gs.best_params_}', file=results_file)
-                    for adv_type in adv_types:
-                        test_size = len(datasets[f'clean_{adv_type}'])
-                        X_test = np.concatenate([
-                            datasets[f'clean_{adv_type}'],
-                            datasets[f'adv_{adv_type}'],
-                            datasets[f'noisy_{adv_type}'],
-                        ])
-                        y_test = np.concatenate([
-                            np.ones(test_size),
-                            np.zeros(test_size),
-                            np.ones(test_size),
-                        ])
-                        y_pred = gs.predict(X_test)
-                        try:
-                            y_scores = gs.decision_function(X_test)
-                        except:
-                            y_scores = gs.predict_proba(X_test)[0]
-                        acc = accuracy_score(y_test, y_pred)
-                        auroc = roc_auc_score(y_test, y_scores)
-                        print(f'Accuracy on {adv_type}: {acc}', file=results_file)
-                        results[run_n][f'acc_{adv_type}'] = acc
-                        print(f'AUROC on {adv_type}: {auroc}', file=results_file)
-                        results[run_n][f'auroc_{adv_type}'] = auroc
+            else:
+                gs = joblib.load(model_filename)
+            # evaluate
+            for adv_type in adv_types:
+                test_size = len(datasets[f'clean_{adv_type}'])
+                X_test = np.concatenate([
+                    datasets[f'clean_{adv_type}'],
+                    datasets[f'adv_{adv_type}'],
+                    datasets[f'noisy_{adv_type}'],
+                ])
+                y_test = np.concatenate([
+                    np.ones(test_size),
+                    np.zeros(test_size),
+                    np.ones(test_size),
+                ])
+                y_pred = gs.predict(X_test)
+                try:
+                    y_scores = gs.decision_function(X_test)
+                except:
+                    y_scores = gs.predict_proba(X_test)[0]
+                acc = accuracy_score(y_test, y_pred)
+                auroc = roc_auc_score(y_test, y_scores)
+                results[run_n][f'acc_{adv_type}'] = acc
+                results[run_n][f'auroc_{adv_type}'] = auroc
+            # save results
+            with open(results_filename, 'w') as results_file:
+                print(f'Best score: {gs.best_score_}', file=results_file)
+                print(f'Best params: {gs.best_params_}', file=results_file)
+                for adv_type in adv_types:
+                    print(f"Accuracy on {adv_type}: {results[run_n][f'acc_{adv_type}']}", file=results_file)
+                    print(f"AUROC on {adv_type}: {results[run_n][f'auroc_{adv_type}']}", file=results_file)
     results_filename = f'{name_prefix}{run_dir_name}_{args.model}.txt'
-    with open(results_filename, 'x') as results_file:
+    with open(results_filename, 'w') as results_file:
         for adv_type in adv_types:
             if is_supervised:
                 # known
@@ -364,8 +372,8 @@ if __name__ == '__main__':
     group.add_argument('--rec_error', action='store_true', help='train model on the reconstruction error AE instead')
     group.add_argument('--both', action='store_true', help='train model on both AEs')
     # parser.add_argument('--outliers', type=int, default=5, help='desired proportion (percent) of outliers in the trainset')
-    parser.add_argument('--runs', default=5, help='number of runs')
-    parser.add_argument('--jobs', default=20, help='number of joblib jobs')
+    parser.add_argument('--runs', default=5, type=int, help='number of runs')
+    parser.add_argument('--jobs', default=20, type=int, help='number of joblib jobs')
     args = parser.parse_args()
     print(args)
     main()

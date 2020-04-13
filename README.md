@@ -1,9 +1,8 @@
-# A Simple Unified Framework for Detecting Out-of-Distribution Samples and Adversarial Attacks
+# Code for paper: ""
 
 This project is for the paper "[]()". It has been forked from: [deep_Mahalanobis_detector](https://github.com/pokaxpoka/deep_Mahalanobis_detector).
 
 ## Preliminaries
-It is tested under Ubuntu Linux 16.04.1 and Python 3.6 environment, and requries Pytorch package to be installed:
 
 * [Pytorch](http://pytorch.org/): Only GPU version is available.
 * [scipy](https://github.com/scipy/scipy)
