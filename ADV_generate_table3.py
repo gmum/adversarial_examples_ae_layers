@@ -12,8 +12,10 @@ parser.add_argument('--metric', default='AUROC', help="AUROC | Accuracy")
 parser.add_argument('--ae_type', default='vae')
 parser.add_argument('--latent', action='store_true')
 group = parser.add_mutually_exclusive_group()
-group.add_argument('--rec_error', action='store_true', help='train model on the reconstruction error AE instead')
-group.add_argument('--both', action='store_true', help='train model on both AEs')
+group.add_argument('--rec_error', action='store_true', help='model trained on the reconstruction error AE instead')
+group.add_argument('--both', action='store_true', help='model trained on both AEs')
+group.add_argument('--only_re', action='store_true', help='model trained only on the reconstruction error')
+group.add_argument('--only_ln', action='store_true', help='model trained only on the latent_norm')
 args = parser.parse_args()
 
 models = ['densenet', 'resnet']
@@ -27,6 +29,8 @@ def main():
     name_prefix = 'latent_' if args.latent else ''
     name_prefix += 'rec_error_' if args.rec_error else ''
     name_prefix += 'both_' if args.both else ''
+    name_prefix += 'ablation_re_' if args.only_re else ''
+    name_prefix += 'ablation_ln_' if args.only_ln else ''
     unsupervised = True if args.classifier_type in ['IF', 'OCSVM'] else False
     # read in results
     results = {}
@@ -48,10 +52,10 @@ def main():
                 file = args.runs_dir / file_name
                 assert file.exists()
                 file_contents = file.read_text()
-                print(f'file_contents: {file_contents}', file=sys.stderr)
+                # print(f'file_contents: {file_contents}', file=sys.stderr)
                 for adv_type in adv_types:
                     pattern = f'{args.metric} on {adv_type}: (.*?) \+/- (.*?)\n'
-                    print(f'pattern: {pattern}', file=sys.stderr)
+                    # print(f'pattern: {pattern}', file=sys.stderr)
                     matches = re.search(pattern, file_contents)
                     results[f'{model}_{dataset}_{adv_type}'] = float(matches.group(1))
                     results_stderr[f'{model}_{dataset}_{adv_type}'] = float(matches.group(2))
