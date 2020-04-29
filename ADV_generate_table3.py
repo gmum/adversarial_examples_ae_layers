@@ -12,16 +12,35 @@ parser.add_argument('--metric', default='AUROC', help="AUROC | Accuracy")
 parser.add_argument('--ae_type', default='vae')
 parser.add_argument('--latent', action='store_true')
 group = parser.add_mutually_exclusive_group()
-group.add_argument('--rec_error', action='store_true', help='model trained on the reconstruction error AE instead')
-group.add_argument('--both', action='store_true', help='model trained on both AEs')
-group.add_argument('--only_re', action='store_true', help='model trained only on the reconstruction error')
-group.add_argument('--only_ln', action='store_true', help='model trained only on the latent_norm')
+group.add_argument('--rec_error',
+                   action='store_true',
+                   help='model trained on the reconstruction error AE instead')
+group.add_argument('--both',
+                   action='store_true',
+                   help='model trained on both AEs')
+group.add_argument('--only_re',
+                   action='store_true',
+                   help='model trained only on the reconstruction error')
+group.add_argument('--only_ln',
+                   action='store_true',
+                   help='model trained only on the latent_norm')
 args = parser.parse_args()
 
 models = ['densenet', 'resnet']
 datasets = ['cifar10', 'cifar100', 'svhn']
 adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100']
 approaches = ['known', 'unknown']
+
+
+def average_result(results: dict, contains=None):
+    to_average = []
+    for k, v in results.items():
+        if contains is not None:
+            if f'_{contains}' in k:
+                to_average.append(v)
+        else:
+            to_average.append(v)
+    return sum(to_average) / (len(to_average) + 1e-10)
 
 
 def main():
@@ -44,11 +63,14 @@ def main():
                         file_name = file.name
                         break
                 else:
-                    print(f'args.classifier_type: {args.classifier_type}', file=sys.stderr)
+                    print(f'args.classifier_type: {args.classifier_type}',
+                          file=sys.stderr)
                     for file in args.runs_dir.iterdir():
                         if re.match(f'{name_prefix}{dataset}.*', file.name):
                             print(file.name, file=sys.stderr)
-                    raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
+                    raise FileNotFoundError(
+                        f'Missing results file for: {model}/{dataset}/{args.ae_type}'
+                    )
                 file = args.runs_dir / file_name
                 assert file.exists()
                 file_contents = file.read_text()
@@ -57,8 +79,10 @@ def main():
                     pattern = f'{args.metric} on {adv_type}: (.*?) \+/- (.*?)\n'
                     # print(f'pattern: {pattern}', file=sys.stderr)
                     matches = re.search(pattern, file_contents)
-                    results[f'{model}_{dataset}_{adv_type}'] = float(matches.group(1))
-                    results_stderr[f'{model}_{dataset}_{adv_type}'] = float(matches.group(2))
+                    results[f'{model}_{dataset}_{adv_type}'] = float(
+                        matches.group(1))
+                    results_stderr[f'{model}_{dataset}_{adv_type}'] = float(
+                        matches.group(2))
     else:
         for approach in approaches:
             for model in models:
@@ -69,16 +93,23 @@ def main():
                             file_name = file.name
                             break
                     else:
-                        print(f'approach: {approach} args.classifier_type: {args.classifier_type}', file=sys.stderr)
+                        print(
+                            f'approach: {approach} args.classifier_type: {args.classifier_type}',
+                            file=sys.stderr)
                         for file in args.runs_dir.iterdir():
-                            if re.match(f'{name_prefix}{dataset}.*', file.name):
+                            if re.match(f'{name_prefix}{dataset}.*',
+                                        file.name):
                                 print(file.name, file=sys.stderr)
-                        raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
+                        raise FileNotFoundError(
+                            f'Missing results file for: {model}/{dataset}/{args.ae_type}'
+                        )
                     file = args.runs_dir / file_name
                     assert file.exists()
                     file_contents = file.read_text()
                     for adv_type in adv_types:
-                        matches = re.search(f'{args.metric} on {adv_type}\({approach}\): (.*?) \+/- (.*?)\n', file_contents)
+                        matches = re.search(
+                            f'{args.metric} on {adv_type}\({approach}\): (.*?) \+/- (.*?)\n',
+                            file_contents)
                         key = f'{model}_{dataset}_{adv_type}_{approach}'
                         results[key] = float(matches.group(1))
                         results_stderr[key] = float(matches.group(2))
@@ -113,12 +144,18 @@ def main():
     best_results['resnet_cifar100_CWL2_known'] = 0.9177
     best_results['resnet_svhn_CWL2_known'] = 0.9215
     # ==================================
-    best_results['densenet_cifar10_FGSM_unknown'] = best_results['densenet_cifar10_FGSM_known']
-    best_results['densenet_cifar100_FGSM_unknown'] = best_results['densenet_cifar100_FGSM_known']
-    best_results['densenet_svhn_FGSM_unknown'] = best_results['densenet_svhn_FGSM_known']
-    best_results['resnet_cifar10_FGSM_unknown'] = best_results['resnet_cifar10_FGSM_known']
-    best_results['resnet_cifar100_FGSM_unknown'] = best_results['resnet_cifar100_FGSM_known']
-    best_results['resnet_svhn_FGSM_unknown'] = best_results['resnet_svhn_FGSM_known']
+    best_results['densenet_cifar10_FGSM_unknown'] = best_results[
+        'densenet_cifar10_FGSM_known']
+    best_results['densenet_cifar100_FGSM_unknown'] = best_results[
+        'densenet_cifar100_FGSM_known']
+    best_results['densenet_svhn_FGSM_unknown'] = best_results[
+        'densenet_svhn_FGSM_known']
+    best_results['resnet_cifar10_FGSM_unknown'] = best_results[
+        'resnet_cifar10_FGSM_known']
+    best_results['resnet_cifar100_FGSM_unknown'] = best_results[
+        'resnet_cifar100_FGSM_known']
+    best_results['resnet_svhn_FGSM_unknown'] = best_results[
+        'resnet_svhn_FGSM_known']
     # ==================================
     best_results['densenet_cifar10_BIM_unknown'] = 0.9951
     best_results['densenet_cifar100_BIM_unknown'] = 0.9827
@@ -189,6 +226,9 @@ def main():
             rows.append(row)
     print(tabulate(rows, headers='firstrow'))
     print(f'Better results count: {better_counter}')
+    print(f'Averaged AUROC for known: {average_result(results, "known")}')
+    print(f'Averaged AUROC for unknown: {average_result(results, "unknown")}')
+    print(f'Averaged AUROC: {average_result(results)}')
 
 
 if __name__ == '__main__':
