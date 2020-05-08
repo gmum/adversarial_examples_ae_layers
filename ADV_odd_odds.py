@@ -17,6 +17,7 @@ import data_loader
 import models
 import logging
 from typing import OrderedDict
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 
 # modified code from https://github.com/yk/icml19_public
@@ -39,7 +40,7 @@ def collect_statistics(
     #    pgd_train=None,
     #    fit_classifier=False,
     #    just_detect=False,
-):
+    cache_alignments_dir=None):
     assert len(x_train) == len(y_train)
     # if pgd_train is not None:
     #     assert len(pgd_train) == len(x_train)
@@ -147,7 +148,15 @@ def collect_statistics(
     #     return x_pgd
 
     def get_latent_and_pred(x):
-        l, p = map(to_np, latent_and_logits_fn(to_th(x)))
+        # print(f'get_latent_and_pred enter')
+        # print(f'x.shape: {x.shape}')
+        latent_and_logits = latent_and_logits_fn(to_th(x))
+        # print(f'latent_and_logits[0].size(): {latent_and_logits[0].size()}')
+        # print(f'latent_and_logits[0][0]]: {latent_and_logits[0][0]}')
+        # print(f'latent_and_logits[1].size(): {latent_and_logits[1].size()}')
+        # print(f'latent_and_logits[1][0]]: {latent_and_logits[1][0]}')
+        l, p = map(to_np, latent_and_logits)
+        # print(f'get_latent_and_pred exit')
         return l, p.argmax(-1)
 
     x_preds_clean = []
@@ -157,7 +166,8 @@ def collect_statistics(
     latent_pgd = []
 
     # TODO accept adv examples as argument
-    for b in tqdm.trange(n_batches, desc='creating adversarial samples'):
+    for b in tqdm(range(n_batches),
+                  desc='_not_? creating adversarial samples'):
         x_batch = x_train[b * batch_size:(b + 1) * batch_size]
         lc, pc = get_latent_and_pred(x_batch)
         x_preds_clean.append(pc)
@@ -224,8 +234,8 @@ def collect_statistics(
     #                                                       x_preds_pgd,
     #                                                       latent_pgd))
 
-    weights_np = weights.cpu().numpy()
-    big_memory = weights.shape[0] > 20  # TODO figure out??
+    weights_np = weights.detach().cpu().numpy()
+    big_memory = weights.shape[0] > 20  # TODO figure this out??
     logging.info('BIG MEMORY: {}'.format(big_memory))
     if not big_memory:
         wdiffs = weights[None, :, :] - weights[:, None, :]
@@ -243,6 +253,8 @@ def collect_statistics(
                                     clip=clip_alignments)
         lat_noisy, _ = latent_and_logits_fn(x_noisy)
         lat_diffs = lat[None] - lat_noisy
+        # print(f'lat_diffs.size(): {lat_diffs.size()}')
+        # print(f'wdiffs_relevant.size(): {wdiffs_relevant.size()}')
         return to_np(torch.matmul(lat_diffs,
                                   wdiffs_relevant.transpose(1, 0)))[:,
                                                                     idx_wo_pc]
@@ -253,6 +265,7 @@ def collect_statistics(
                             source=None,
                             noise_eps=noise_eps_all):
         if source is None:
+            # print(f'pred: {pred}')
             idx_wo_pc = [i for i in range(nb_classes) if i != pred]
             assert len(idx_wo_pc) == nb_classes - 1
         else:
@@ -308,7 +321,7 @@ def collect_statistics(
                 logging.info('loading alignments from {} for {}'.format(
                     load_alignments_dir, neps))
             if not loading:
-                for x, lc, pc, pcc in tqdm.tqdm(
+                for x, lc, pc, pcc in tqdm(
                         zip(x_set, latent_set, x_preds_set, x_preds_clean),
                         total=len(x_set),
                         desc='collecting stats for {}'.format(neps)):
@@ -347,32 +360,31 @@ def collect_statistics(
                     wdiff_stats[k] = _compute_stats_from_values(wdiff_stats[k])
         return wdiff_stats
 
-    # save_alignments_dir_clean = os.path.join(
-    #     save_alignments_dir, 'clean') if save_alignments_dir else None
-    # save_alignments_dir_pgd = os.path.join(
-    #     save_alignments_dir, 'pgd') if save_alignments_dir else None
-    # load_alignments_dir_clean = os.path.join(
-    #     load_alignments_dir, 'clean') if load_alignments_dir else None
-    # load_alignments_dir_pgd = os.path.join(
-    #     load_alignments_dir, 'pgd') if load_alignments_dir else None
-    # if load_alignments_dir:
-    #     load_alignments_dir_clean, load_alignments_dir_pgd = map(
-    #         lambda s: '{}_{}'.format(s, 'clip'
-    #                                  if clip_alignments else 'noclip'),
-    #         (load_alignments_dir_clean, load_alignments_dir_pgd))
-    # if save_alignments_dir:
-    #     save_alignments_dir_clean, save_alignments_dir_pgd = map(
-    #         lambda s: '{}_{}'.format(s, 'clip'
-    #                                  if clip_alignments else 'noclip'),
-    #         (save_alignments_dir_clean, save_alignments_dir_pgd))
+    save_alignments_dir_clean = os.path.join(
+        cache_alignments_dir, 'clean') if cache_alignments_dir else None
+    save_alignments_dir_pgd = os.path.join(
+        cache_alignments_dir, 'pgd') if cache_alignments_dir else None
+    load_alignments_dir_clean = os.path.join(
+        cache_alignments_dir, 'clean') if cache_alignments_dir else None
+    load_alignments_dir_pgd = os.path.join(
+        cache_alignments_dir, 'pgd') if cache_alignments_dir else None
+    if cache_alignments_dir:
+        load_alignments_dir_clean, load_alignments_dir_pgd = map(
+            lambda s: '{}_{}'.format(s, 'clip'
+                                     if clip_alignments else 'noclip'),
+            (load_alignments_dir_clean, load_alignments_dir_pgd))
+    if cache_alignments_dir:
+        save_alignments_dir_clean, save_alignments_dir_pgd = map(
+            lambda s: '{}_{}'.format(s, 'clip'
+                                     if clip_alignments else 'noclip'),
+            (save_alignments_dir_clean, save_alignments_dir_pgd))
     wdiff_stats_clean = _collect_wdiff_stats(
         x_train,
         latent_clean,
         x_preds_clean,
         clean=True,
-        # save_alignments_dir=save_alignments_dir_clean,
-        # load_alignments_dir=load_alignments_dir_clean
-    )
+        save_alignments_dir=save_alignments_dir_clean,
+        load_alignments_dir=load_alignments_dir_clean)
     # if not just_detect:
     #     wdiff_stats_pgd = _collect_wdiff_stats(
     #         x_train_pgd,
@@ -415,32 +427,32 @@ def collect_statistics(
     #                 tc_stats.append(np.stack(sc_stats, 1))
     #         wdiff_stats_pgd_classify.append(tc_stats)
 
-        # if fit_classifier:
-        #     logging.info('fitting classifier')
-        #     for tc in tqdm.trange(nb_classes):
-        #         tc_X = []
-        #         tc_Y = []
-        #         idx_wo_tc = [sc for sc in range(nb_classes) if sc != tc]
-        #         for i, sc in enumerate(idx_wo_tc):
-        #             sc_data = wdiff_stats_pgd_classify[tc][i]
-        #             if sc_data is not None:
-        #                 sc_data = sc_data.reshape(sc_data.shape[0], -1)
-        #                 for d in sc_data:
-        #                     tc_X.append(d.ravel())
-        #                     tc_Y.append(sc)
-        #         Y_unq = np.unique(tc_Y)
-        #         if len(Y_unq) == 0:
-        #             lr = SimpleNamespace(predict=lambda x: np.array(tc))
-        #         elif len(Y_unq) == 1:
-        #             lr = SimpleNamespace(predict=lambda x: np.array(tc_Y[0]))
-        #         else:
-        #             tc_X = np.stack(tc_X)
-        #             tc_Y = np.array(tc_Y)
-        #             lr = LogisticRegression(solver='lbfgs',
-        #                                     multi_class='multinomial',
-        #                                     max_iter=1000)
-        #             lr.fit(tc_X, tc_Y)
-        #         wdiff_stats_pgd_classify[tc] = lr
+    # if fit_classifier:
+    #     logging.info('fitting classifier')
+    #     for tc in tqdm.trange(nb_classes):
+    #         tc_X = []
+    #         tc_Y = []
+    #         idx_wo_tc = [sc for sc in range(nb_classes) if sc != tc]
+    #         for i, sc in enumerate(idx_wo_tc):
+    #             sc_data = wdiff_stats_pgd_classify[tc][i]
+    #             if sc_data is not None:
+    #                 sc_data = sc_data.reshape(sc_data.shape[0], -1)
+    #                 for d in sc_data:
+    #                     tc_X.append(d.ravel())
+    #                     tc_Y.append(sc)
+    #         Y_unq = np.unique(tc_Y)
+    #         if len(Y_unq) == 0:
+    #             lr = SimpleNamespace(predict=lambda x: np.array(tc))
+    #         elif len(Y_unq) == 1:
+    #             lr = SimpleNamespace(predict=lambda x: np.array(tc_Y[0]))
+    #         else:
+    #             tc_X = np.stack(tc_X)
+    #             tc_Y = np.array(tc_Y)
+    #             lr = LogisticRegression(solver='lbfgs',
+    #                                     multi_class='multinomial',
+    #                                     max_iter=1000)
+    #             lr.fit(tc_X, tc_Y)
+    #         wdiff_stats_pgd_classify[tc] = lr
 
     batch = yield
 
@@ -568,13 +580,102 @@ def main():
         noisy_loaders[adv_type] = torch.utils.data.DataLoader(
             test_noisy_data[adv_type], batch_size=args.batch_size)
 
-    # get the feature maps' sizes
     model.eval()
-    temp_x = torch.rand(1, 3, 32, 32).cuda()
-    feature_maps = model.feature_list(temp_x)[1]
-    feature_map_sizes = []
-    for out in feature_maps:
-        feature_map_sizes.append(out.size()[1:])
+
+    # datasets = {}
+    method_name = 'odd_odds'
+    dir_name = f'{method_name}_{args.net_type}_{args.dataset}'
+    exists = os.path.isdir(dir_name)
+    if not exists:
+        os.mkdir(dir_name)
+    results_filename = f'{dir_name}/results_known.txt'
+    with open(results_filename, 'w') as results_file:
+        for adv_type in adv_types:
+            train_split = 0.1
+            train_size = int(train_split * len(test_clean_data[adv_type]))
+            test_size = len(test_clean_data[adv_type]) - train_size
+            X = np.concatenate([
+                test_clean_data[adv_type][:train_size],
+                test_adv_data[adv_type][:train_size],
+                test_noisy_data[adv_type][:train_size],
+            ])
+            label_y = np.concatenate([
+                test_label[adv_type][:train_size],
+                test_label[adv_type][:train_size],
+                test_label[adv_type][:train_size],
+            ])
+            adv_y = np.concatenate([
+                np.ones(train_size),
+                np.zeros(train_size),
+                np.ones(train_size),
+            ])
+            X_test = np.concatenate([
+                test_clean_data[adv_type][train_size:],
+                test_adv_data[adv_type][train_size:],
+                test_noisy_data[adv_type][train_size:],
+            ])
+            label_y_test = np.concatenate([
+                test_label[adv_type][train_size:],
+                test_label[adv_type][train_size:],
+                test_label[adv_type][train_size:],
+            ])
+            adv_y_test = np.concatenate([
+                np.ones(test_size),
+                np.zeros(test_size),
+                np.ones(test_size),
+            ])
+
+            # "train"
+            class_vectors = model.get_class_vectors()
+            num_classes = class_vectors.size(0)
+            noise_eps = 'n0.01,s0.01,u0.01,n0.02,s0.02,u0.02,s0.03,n0.03,u0.03'
+            # noise_eps_detect = 'n0.003,s0.003,u0.003,n0.005,s0.005,u0.005,s0.008,n0.008,u0.008'
+            clip_min = min(X.min(), X_test.min())
+            clip_max = max(X.max(), X_test.max())
+            predictor = collect_statistics(
+                X,
+                label_y,  # TODO these are class labels, not adversarial binary labels
+                latent_and_logits_fn=model.forward_with_latent,
+                nb_classes=args.num_classes,
+                weights=model.get_class_vectors(),
+                targeted=False,
+                noise_eps=noise_eps.split(','),
+                # noise_eps_detect=noise_eps_detect.split(','))
+                noise_eps_detect=None,
+                num_noise_samples=256,
+                batch_size=128,
+                clip_min=clip_min,
+                clip_max=clip_max,
+                p_ratio_cutoff=0.999,
+                clip_alignments=True,
+                cache_alignments_dir=dir_name if exists else None,
+            )
+            next(predictor)
+
+            # test
+            y_pred_list = []
+            batch_size = 128
+            for i in range(X_test.shape[0] // batch_size + 1):
+                X_test_batch = X_test[i * batch_size:(i + 1) * batch_size]
+                corrected_batch, y_pred_batch = predictor.send(X_test_batch).T
+                print(f'corrected_batch.shape: {corrected_batch.shape}')
+                print(f'y_pred_batch.shape: {y_pred_batch.shape}')
+                print(f'y_pred_batch: {y_pred_batch}')
+                y_pred_list.append(y_pred_batch)
+            y_pred = np.concatenate(y_pred_list, axis=0)
+            y_scores = y_pred
+            acc = accuracy_score(adv_y_test, y_pred)
+            auroc = roc_auc_score(adv_y_test, y_scores)
+            print(f'Accuracy on {adv_type}: {acc}', file=results_file)
+            results[run_n][f'acc_known_{adv_type}'] = acc
+            print(f'AUROC on {adv_type}: {auroc}', file=results_file)
+            results[run_n][f'auroc_known_{adv_type}'] = auroc
+
+    # TODO unknown variant
+    ...
+
+    # TODO unsupervised variant
+    ...
 
 
 if __name__ == '__main__':
@@ -592,7 +693,7 @@ if __name__ == '__main__':
                         help='path to dataset')
     parser.add_argument('--outf',
                         default='./adv_output/',
-                        help='folder to output results')
+                        help='folder with data')
     parser.add_argument('--num_classes',
                         type=int,
                         default=10,

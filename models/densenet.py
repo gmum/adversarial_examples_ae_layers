@@ -128,6 +128,20 @@ class DenseNet3(nn.Module):
         out = out.view(-1, self.in_planes)
         return self.fc(out)
 
+    def forward_with_latent(self, x):
+        out = self.conv1(x)
+        out = self.trans1(self.block1(out))
+        out = self.trans2(self.block2(out))
+        out = self.block3(out)
+        out = self.relu(self.bn1(out))
+        out = F.avg_pool2d(out, 8)
+        latent = out.view(out.size(0), -1)
+        out = out.view(-1, self.in_planes)
+        return latent, self.fc(out)
+
+    def get_class_vectors(self):
+        return self.fc.weight
+
     # function to extact the multiple features
     def feature_list(self, x):
         out_list = []
