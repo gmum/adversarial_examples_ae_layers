@@ -42,8 +42,7 @@ def collect_statistics(
     #    just_detect=False,
     cache_alignments_dir=None):
     assert len(x_train) == len(y_train)
-    # if pgd_train is not None:
-    #     assert len(pgd_train) == len(x_train)
+
     assert latent_and_logits_fn is not None
     assert nb_classes is not None
     assert weights is not None
@@ -130,23 +129,6 @@ def collect_statistics(
                 x_noisy.clamp_(clip_min, clip_max)
         return x_noisy
 
-    # def attack_pgd(x, x_pred, targeted=False):
-    #     x_pgd = get_noise_samples(x, x.shape[0], pgd_eps, clip=True)
-
-    #     for _ in range(pgd_iters):
-    #         x_th = to_th(x_pgd).requires_grad_(True)
-    #         x_grads = to_np(
-    #             torch.autograd.grad(
-    #                 loss_fn(logits_fn(x_th), to_th(x_pred, np.long)),
-    #                 [x_th])[0])
-
-    #         x_pgd += pgd_lr * np.sign(x_grads) * (-2. * (targeted - 1 / 2))
-    #         x_pgd = x_pgd.clip(x - pgd_eps, x + pgd_eps)
-    #         x_pgd = x_pgd.clip(clip_min, clip_max)
-    #         if debug:
-    #             break
-    #     return x_pgd
-
     def get_latent_and_pred(x):
         # print(f'get_latent_and_pred enter')
         # print(f'x.shape: {x.shape}')
@@ -165,56 +147,17 @@ def collect_statistics(
     latent_clean = []
     latent_pgd = []
 
-    # TODO accept adv examples as argument
     for b in tqdm(range(n_batches),
-                  desc='_not_? creating adversarial samples'):
+                  desc='processing dataset',
+                  dynamic_ncols=True):
         x_batch = x_train[b * batch_size:(b + 1) * batch_size]
         lc, pc = get_latent_and_pred(x_batch)
         x_preds_clean.append(pc)
         latent_clean.append(lc)
 
-        # if not just_detect:
-        #     if pgd_train is not None:
-        #         x_pgd = pgd_train[b * batch_size:(b + 1) * batch_size]
-        #     else:
-        #         if targeted:
-        #             x_pgd = np.stack([
-        #                 attack_pgd(
-        #                     x_batch, np.ones_like(pc) * i, targeted=True)
-        #                 for i in range(nb_classes)
-        #             ], 1)
-        #         else:
-        #             x_pgd = attack_pgd(x_batch, pc, targeted=False)
-        #     x_train_pgd.append(x_pgd)
-
-        #     if targeted:
-        #         pps, lps = [], []
-        #         for i in range(x_pgd.shape[1]):
-        #             lp, pp = get_latent_and_pred(x_pgd[:, i])
-        #             pps.append(pp)
-        #             lps.append(lp)
-        #         x_preds_pgd.append(np.stack(pps, 1))
-        #         latent_pgd.append(np.stack(lps, 1))
-        #     else:
-        #         lp, pp = get_latent_and_pred(x_pgd)
-        #         x_preds_pgd.append(pp)
-        #         latent_pgd.append(lp)
-
     x_preds_clean, latent_clean = map(np.concatenate,
                                       (x_preds_clean, latent_clean))
-    # if not just_detect:
-    #     x_train_pgd, x_preds_pgd, latent_pgd = map(
-    #         np.concatenate, (x_train_pgd, x_preds_pgd, latent_pgd))
 
-    # valid_idcs = []
-    # if not just_detect:
-    #     for i, (pc, pp,
-    #             y) in enumerate(zip(x_preds_clean, x_preds_pgd, y_train)):
-    #         if y == pc and pc != pp:
-    #             # if y == pc:
-    #             valid_idcs.append(i)
-    # else:
-    #     valid_idcs = list(range(len(x_preds_clean)))
     valid_idcs = list(range(len(x_preds_clean)))
 
     logging.info('valid idcs ratio: {}'.format(len(valid_idcs) / len(y_train)))
@@ -228,11 +171,6 @@ def collect_statistics(
                                                                y_train,
                                                                x_preds_clean,
                                                                latent_clean))
-    # if not just_detect:
-    #     x_train_pgd, x_preds_pgd, latent_pgd = (a[valid_idcs]
-    #                                             for a in (x_train_pgd,
-    #                                                       x_preds_pgd,
-    #                                                       latent_pgd))
 
     weights_np = weights.detach().cpu().numpy()
     big_memory = weights.shape[0] > 20  # TODO figure this out??
@@ -324,7 +262,8 @@ def collect_statistics(
                 for x, lc, pc, pcc in tqdm(
                         zip(x_set, latent_set, x_preds_set, x_preds_clean),
                         total=len(x_set),
-                        desc='collecting stats for {}'.format(neps)):
+                        desc='collecting stats for {}'.format(neps),
+                        dynamic_ncols=True):
                     if len(lc.shape) == 2:
                         alignments = []
                         for i, (xi, lci, pci) in enumerate(zip(x, lc, pc)):
@@ -385,23 +324,6 @@ def collect_statistics(
         clean=True,
         save_alignments_dir=save_alignments_dir_clean,
         load_alignments_dir=load_alignments_dir_clean)
-    # if not just_detect:
-    #     wdiff_stats_pgd = _collect_wdiff_stats(
-    #         x_train_pgd,
-    #         latent_pgd,
-    #         x_preds_pgd,
-    #         clean=False,
-    #         save_alignments_dir=save_alignments_dir_pgd,
-    #         load_alignments_dir=load_alignments_dir_pgd)
-
-    # ??? this is always False...
-    # if debug_dict is not None and False:
-    #     esizes = OrderedDict((k, []) for k in noise_eps_all)
-    #     for k, (mc, sc) in wdiff_stats_clean.items():
-    #         mp, sp = wdiff_stats_pgd[k]
-    #         esizes[k[-1]].append(np.abs(mp - mc) / ((sp + sc) / 2.))
-    #     debug_dict['effect_sizes'] = OrderedDict(
-    #         (k, np.array(v)) for k, v in esizes.items())
 
     wdiff_stats_clean_detect = [
         np.stack([wdiff_stats_clean[(p, p, eps)] for eps in noise_eps_detect])
@@ -411,48 +333,6 @@ def collect_statistics(
         s.transpose((1, 0, 2)) if len(s.shape) == 3 else None
         for s in wdiff_stats_clean_detect
     ]
-    # wdiff_stats_pgd_classify = []
-    # if not just_detect:
-    #     for tc in range(nb_classes):
-    #         tc_stats = []
-    #         for sc in range(nb_classes):
-    #             if sc == tc:
-    #                 continue
-    #             sc_stats = [
-    #                 wdiff_stats_pgd[(sc, tc, eps)] for eps in noise_eps
-    #             ]
-    #             if sc_stats[0] is None:
-    #                 tc_stats.append(None)
-    #             else:
-    #                 tc_stats.append(np.stack(sc_stats, 1))
-    #         wdiff_stats_pgd_classify.append(tc_stats)
-
-    # if fit_classifier:
-    #     logging.info('fitting classifier')
-    #     for tc in tqdm.trange(nb_classes):
-    #         tc_X = []
-    #         tc_Y = []
-    #         idx_wo_tc = [sc for sc in range(nb_classes) if sc != tc]
-    #         for i, sc in enumerate(idx_wo_tc):
-    #             sc_data = wdiff_stats_pgd_classify[tc][i]
-    #             if sc_data is not None:
-    #                 sc_data = sc_data.reshape(sc_data.shape[0], -1)
-    #                 for d in sc_data:
-    #                     tc_X.append(d.ravel())
-    #                     tc_Y.append(sc)
-    #         Y_unq = np.unique(tc_Y)
-    #         if len(Y_unq) == 0:
-    #             lr = SimpleNamespace(predict=lambda x: np.array(tc))
-    #         elif len(Y_unq) == 1:
-    #             lr = SimpleNamespace(predict=lambda x: np.array(tc_Y[0]))
-    #         else:
-    #             tc_X = np.stack(tc_X)
-    #             tc_Y = np.array(tc_Y)
-    #             lr = LogisticRegression(solver='lbfgs',
-    #                                     multi_class='multinomial',
-    #                                     max_iter=1000)
-    #             lr.fit(tc_X, tc_Y)
-    #         wdiff_stats_pgd_classify[tc] = lr
 
     batch = yield
 
@@ -460,6 +340,7 @@ def collect_statistics(
         batch_latent, batch_pred = get_latent_and_pred(batch)
         corrected_pred = []
         detection = []
+        non_thresholded = []
         for b, latent_b, pred_b in zip(batch, batch_latent, batch_pred):
             b_align, idx_wo_pb = _compute_alignments(b, latent_b, pred_b)
             b_align_det = np.stack([b_align[eps] for eps in noise_eps_detect])
@@ -472,51 +353,19 @@ def collect_statistics(
                 wdm_det, wds_det = wdsc_det_pred_b
                 z_clean = (b_align_det - wdm_det[:, None]) / wds_det[:, None]
                 z_clean_mean = z_clean.mean(1)
+                # return also non-thresholded values
+                z_decision = z_clean_mean.mean(0).max(-1)
                 z_cutoff = scipy.stats.norm.ppf(p_ratio_cutoff)
-                z_hit = z_clean_mean.mean(0).max(-1) > z_cutoff
+                z_hit = z_decision > z_cutoff
 
-            # if not just_detect:
-            #     if fit_classifier:
-            #         lr = wdiff_stats_pgd_classify[pb]
-            #         b_align = b_align.mean(1).reshape((1, -1))
-            #         lr_pred = lr.predict(b_align)
-            #     else:
-            #         wdp = wdiff_stats_pgd_classify[pb]
-            #         if wdp is None:
-            #             z_pgd_mode = None
-            #         else:
-            #             wdp_not_none_idcs = [
-            #                 i for i, w in enumerate(wdp) if w is not None
-            #             ]
-            #             if len(wdp_not_none_idcs) == 0:
-            #                 z_pgd_mode = None
-            #             else:
-            #                 wdp = np.stack([wdp[i] for i in wdp_not_none_idcs],
-            #                                2)
-            #                 idx_wo_pb_wdp = [
-            #                     idx_wo_pb[i] for i in wdp_not_none_idcs
-            #                 ]
-            #                 ssidx = np.arange(wdp.shape[-2])
-            #                 wdp = wdp[:, :, ssidx, ssidx]
-            #                 wdmp, wdsp = wdp
-            #                 b_align = b_align[:, :, wdp_not_none_idcs]
-            #                 z_pgd = (b_align - wdmp[:, None]) / wdsp[:, None]
-            #                 z_pgd_mean = z_pgd.mean(1)
-            #                 z_pgd_mode = scipy.stats.mode(
-            #                     z_pgd_mean.argmax(-1)).mode[0]
             if z_hit:
-                # if not just_detect:
-                #     if fit_classifier:
-                #         print(lr_pred)
-                #         pb = lr_pred.item()
-                #     else:
-                #         if z_pgd_mode is not None:
-                #             pb = idx_wo_pb_wdp[z_pgd_mode]
                 detection.append(True)
             else:
                 detection.append(False)
+            non_thresholded.append(z_decision)
             corrected_pred.append(pred_b)
-        batch = yield np.stack((corrected_pred, detection), -1)
+        batch = yield np.stack((corrected_pred, detection, non_thresholded),
+                               -1)
 
 
 def main():
@@ -580,6 +429,18 @@ def main():
         noisy_loaders[adv_type] = torch.utils.data.DataLoader(
             test_noisy_data[adv_type], batch_size=args.batch_size)
 
+    # nasty hack
+    train_clean_x = []
+    train_clean_y = []
+    for X, y in tqdm(train_loader,
+                     desc='Aggregating train dataset',
+                     dynamic_ncols=True):
+        train_clean_x.append(X.cpu().numpy())
+        train_clean_y.append(X.cpu().numpy())
+    train_clean_x = np.concatenate(train_clean_x, axis=0)
+    train_clean_y = np.concatenate(train_clean_y, axis=0)
+    X, y = train_clean_x, train_clean_y
+
     model.eval()
 
     # datasets = {}
@@ -588,60 +449,89 @@ def main():
     exists = os.path.isdir(dir_name)
     if not exists:
         os.mkdir(dir_name)
-    results_filename = f'{dir_name}/results_known.txt'
+
+    # "known" variant
+    # results_filename = f'{dir_name}/results_known.txt'
+    # with open(results_filename, 'w') as results_file:
+    #     for adv_type in adv_types:
+    #         train_split = 0.1
+    #         train_size = int(train_split * len(test_clean_data[adv_type]))
+    #         test_size = len(test_clean_data[adv_type]) - train_size
+    #         X = np.concatenate([
+    #             test_clean_data[adv_type][:train_size],
+    #             test_adv_data[adv_type][:train_size],
+    #             test_noisy_data[adv_type][:train_size],
+    #         ])
+    #         label_y = np.concatenate([
+    #             test_label[adv_type][:train_size],
+    #             test_label[adv_type][:train_size],
+    #             test_label[adv_type][:train_size],
+    #         ])
+    #         adv_y = np.concatenate([
+    #             np.ones(train_size),
+    #             np.zeros(train_size),
+    #             np.ones(train_size),
+    #         ])
+    #         X_test = np.concatenate([
+    #             test_clean_data[adv_type][train_size:],
+    #             test_adv_data[adv_type][train_size:],
+    #             test_noisy_data[adv_type][train_size:],
+    #         ])
+    #         label_y_test = np.concatenate([
+    #             test_label[adv_type][train_size:],
+    #             test_label[adv_type][train_size:],
+    #             test_label[adv_type][train_size:],
+    #         ])
+    #         adv_y_test = np.concatenate([
+    #             np.ones(test_size),
+    #             np.zeros(test_size),
+    #             np.ones(test_size),
+    #         ])
+
+    # "unsupervised" variant
+    results_filename = f'{dir_name}/results_unsupervised.txt'
     with open(results_filename, 'w') as results_file:
         for adv_type in adv_types:
-            train_split = 0.1
-            train_size = int(train_split * len(test_clean_data[adv_type]))
-            test_size = len(test_clean_data[adv_type]) - train_size
-            X = np.concatenate([
-                test_clean_data[adv_type][:train_size],
-                test_adv_data[adv_type][:train_size],
-                test_noisy_data[adv_type][:train_size],
-            ])
-            label_y = np.concatenate([
-                test_label[adv_type][:train_size],
-                test_label[adv_type][:train_size],
-                test_label[adv_type][:train_size],
-            ])
-            adv_y = np.concatenate([
-                np.ones(train_size),
-                np.zeros(train_size),
-                np.ones(train_size),
-            ])
+            test_size = len(test_clean_data[adv_type])
             X_test = np.concatenate([
-                test_clean_data[adv_type][train_size:],
-                test_adv_data[adv_type][train_size:],
-                test_noisy_data[adv_type][train_size:],
+                test_clean_data[adv_type],
+                test_adv_data[adv_type],
+                test_noisy_data[adv_type],
             ])
             label_y_test = np.concatenate([
-                test_label[adv_type][train_size:],
-                test_label[adv_type][train_size:],
-                test_label[adv_type][train_size:],
+                test_label[adv_type],
+                test_label[adv_type],
+                test_label[adv_type],
             ])
             adv_y_test = np.concatenate([
                 np.ones(test_size),
                 np.zeros(test_size),
                 np.ones(test_size),
             ])
-
             # "train"
             class_vectors = model.get_class_vectors()
             num_classes = class_vectors.size(0)
-            noise_eps = 'n0.01,s0.01,u0.01,n0.02,s0.02,u0.02,s0.03,n0.03,u0.03'
-            # noise_eps_detect = 'n0.003,s0.003,u0.003,n0.005,s0.005,u0.005,s0.008,n0.008,u0.008'
+            # parameters taken from tensorflow file:
+            # noise_eps = 'n18.0,n24.0,n30.0'.split(',')
+            # noise_eps_detect = 'n30.0'.split(',')
+            # parameters taken from pytorch file:
+            noise_eps = 'n0.01,s0.01,u0.01,n0.02,s0.02,u0.02,s0.03,n0.03,u0.03'.split(
+                ',')
+            noise_eps_detect = 'n0.003,s0.003,u0.003,n0.005,s0.005,u0.005,s0.008,n0.008,u0.008'.split(
+                ',')
+            # noise_eps_detect = None
+
             clip_min = min(X.min(), X_test.min())
             clip_max = max(X.max(), X_test.max())
             predictor = collect_statistics(
                 X,
-                label_y,  # TODO these are class labels, not adversarial binary labels
+                y,  # TODO these are class labels, not adversarial binary labels
                 latent_and_logits_fn=model.forward_with_latent,
                 nb_classes=args.num_classes,
                 weights=model.get_class_vectors(),
                 targeted=False,
-                noise_eps=noise_eps.split(','),
-                # noise_eps_detect=noise_eps_detect.split(','))
-                noise_eps_detect=None,
+                noise_eps=noise_eps,
+                noise_eps_detect=noise_eps_detect,
                 num_noise_samples=256,
                 batch_size=128,
                 clip_min=clip_min,
@@ -654,28 +544,26 @@ def main():
 
             # test
             y_pred_list = []
+            y_score_list = []
             batch_size = 128
-            for i in range(X_test.shape[0] // batch_size + 1):
+            batches, remainder = divmod(X_test.shape[0], batch_size)
+            if remainder > 0:
+                batches += 1
+            for i in tqdm(range(batches), dynamic_ncols=True):
                 X_test_batch = X_test[i * batch_size:(i + 1) * batch_size]
-                corrected_batch, y_pred_batch = predictor.send(X_test_batch).T
-                print(f'corrected_batch.shape: {corrected_batch.shape}')
-                print(f'y_pred_batch.shape: {y_pred_batch.shape}')
-                print(f'y_pred_batch: {y_pred_batch}')
+                corrected_batch, y_pred_batch, decision_batch = predictor.send(
+                    X_test_batch).T
+                # print(f'corrected_batch.shape: {corrected_batch.shape}')
+                # print(f'y_pred_batch.shape: {y_pred_batch.shape}')
+                # print(f'y_pred_batch: {y_pred_batch}')
                 y_pred_list.append(y_pred_batch)
+                y_score_list.append(decision_batch)
             y_pred = np.concatenate(y_pred_list, axis=0)
-            y_scores = y_pred
+            y_scores = np.concatenate(y_score_list, axis=0)
             acc = accuracy_score(adv_y_test, y_pred)
             auroc = roc_auc_score(adv_y_test, y_scores)
             print(f'Accuracy on {adv_type}: {acc}', file=results_file)
-            results[run_n][f'acc_known_{adv_type}'] = acc
             print(f'AUROC on {adv_type}: {auroc}', file=results_file)
-            results[run_n][f'auroc_known_{adv_type}'] = auroc
-
-    # TODO unknown variant
-    ...
-
-    # TODO unsupervised variant
-    ...
 
 
 if __name__ == '__main__':
