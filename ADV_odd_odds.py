@@ -46,6 +46,7 @@ def collect_statistics(
     assert latent_and_logits_fn is not None
     assert nb_classes is not None
     assert weights is not None
+    
 
     def latent_fn(x):
         return to_np(latent_and_logits_fn(to_th(x))[0])
@@ -446,9 +447,7 @@ def main():
     # datasets = {}
     method_name = 'odd_odds'
     dir_name = f'{method_name}_{args.net_type}_{args.dataset}'
-    exists = os.path.isdir(dir_name)
-    if not exists:
-        os.mkdir(dir_name)
+    os.makedirs(dir_name, exist_ok=True)
 
     # "known" variant
     # results_filename = f'{dir_name}/results_known.txt'
@@ -525,7 +524,7 @@ def main():
             clip_max = max(X.max(), X_test.max())
             predictor = collect_statistics(
                 X,
-                y,  # TODO these are class labels, not adversarial binary labels
+                y,  # these are class labels, not adversarial binary labels
                 latent_and_logits_fn=model.forward_with_latent,
                 nb_classes=args.num_classes,
                 weights=model.get_class_vectors(),
@@ -538,7 +537,7 @@ def main():
                 clip_max=clip_max,
                 p_ratio_cutoff=0.999,
                 clip_alignments=True,
-                cache_alignments_dir=dir_name if exists else None,
+                cache_alignments_dir=dir_name,
             )
             next(predictor)
 
@@ -549,7 +548,7 @@ def main():
             batches, remainder = divmod(X_test.shape[0], batch_size)
             if remainder > 0:
                 batches += 1
-            for i in tqdm(range(batches), dynamic_ncols=True):
+            for i in tqdm(range(batches), dynamic_ncols=True, desc=f"evaluating on {adv_type}"):
                 X_test_batch = X_test[i * batch_size:(i + 1) * batch_size]
                 corrected_batch, y_pred_batch, decision_batch = predictor.send(
                     X_test_batch).T

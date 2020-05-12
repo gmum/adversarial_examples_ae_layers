@@ -246,7 +246,9 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #  done
 #done
 #=================================================================================================================
-for model in resnet densenet
+# for model in resnet densenet
+# for model in resnet
+for model in densenet
 do
   for dataset in cifar10 cifar100 svhn
   do
