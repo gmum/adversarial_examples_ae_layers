@@ -507,6 +507,11 @@ def main():
                 np.zeros(test_size),
                 np.ones(test_size),
             ])
+            adv_y_test_switched = np.concatenate([
+                np.zeros(test_size),
+                np.ones(test_size),
+                np.zeros(test_size),
+            ])
             # "train"
             class_vectors = model.get_class_vectors()
             num_classes = class_vectors.size(0)
@@ -559,10 +564,14 @@ def main():
                 y_score_list.append(decision_batch)
             y_pred = np.concatenate(y_pred_list, axis=0)
             y_scores = np.concatenate(y_score_list, axis=0)
-            acc = accuracy_score(adv_y_test, y_pred)
-            auroc = roc_auc_score(adv_y_test, y_scores)
+            acc = accuracy_score(adv_y_test_switched, y_pred)
+            auroc = roc_auc_score(adv_y_test_switched, y_scores)
             print(f'Accuracy on {adv_type}: {acc}', file=results_file)
             print(f'AUROC on {adv_type}: {auroc}', file=results_file)
+            acc = accuracy_score(adv_y_test, y_pred)
+            auroc = roc_auc_score(adv_y_test, y_scores)
+            print(f'Accuracy (original labels) on {adv_type}: {acc}', file=results_file)
+            print(f'AUROC (original labels) on {adv_type}: {auroc}', file=results_file)
 
 
 if __name__ == '__main__':
