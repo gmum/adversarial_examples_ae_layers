@@ -248,11 +248,27 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #=================================================================================================================
 # for model in resnet densenet
 # for model in resnet
-for model in densenet
-do
-  for dataset in cifar10 cifar100 svhn
-  do
-    python -u /home/bwojcik/vae_layers_detector/ADV_odd_odds.py --dataset $dataset --dataroot /mnt/users/bwojcik/local/.datasets --net_type $model
-  done
-done
+# for model in densenet
+# do
+#   # for dataset in cifar10 cifar100 svhn
+#   for dataset in svhn
+#   do
+#     python -u /home/bwojcik/vae_layers_detector/ADV_odd_odds.py --dataset $dataset --dataroot /mnt/users/bwojcik/local/.datasets --net_type $model
+#   done
+# done
+#=================================================================================================================
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known FGSM --jobs 30 --model LR .
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known FGSM --jobs 30 --model LR --latent .
+
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known BIM --jobs 30 --model LR .
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known BIM --jobs 30 --model LR --latent .
+
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known DeepFool --jobs 30 --model LR .
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known DeepFool --jobs 30 --model LR --latent .
+
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known CWL2 --jobs 30 --model LR .
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known CWL2 --jobs 30 --model LR --latent .
+
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known PGD100 --jobs 30 --model LR .
+python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known PGD100 --jobs 30 --model LR --latent .
 #=================================================================================================================
