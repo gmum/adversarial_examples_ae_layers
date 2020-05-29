@@ -110,7 +110,7 @@ def main():
     train_loader, test_loader = data_loader.getTargetDataSet(args.dataset, args.batch_size, in_transform, args.dataroot)
     test_clean_data, test_adv_data, test_noisy_data, test_label = {}, {}, {}, {}
     clean_loaders, adv_loaders, noisy_loaders = {}, {}, {}
-    adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100']
+    adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100'] if args.adv_type is None else [args.adv_type]
     for adv_type in adv_types:
         test_clean_data[adv_type] = torch.load(
             args.outf + 'clean_data_%s_%s_%s.pth' % (args.net_type, args.dataset, adv_type))
@@ -456,7 +456,8 @@ if __name__ == '__main__':
     parser.add_argument('--ae_type', required=True, help='ae | vae | wae | waegan')
     parser.add_argument('--gpu', type=int, default=0, help='gpu index')
     parser.add_argument('--epochs', default=150, help='epochs of AE training')
-    parser.add_argument('--runs', default=5, help='number of runs')
+    parser.add_argument('--adv_type', type=str, help='adv type for pushing through AEs')
+    parser.add_argument('--runs', default=5, type=int, help='number of runs')
     args = parser.parse_args()
     print(args)
     main()

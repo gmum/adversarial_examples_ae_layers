@@ -11,7 +11,7 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #do
 #  for dataset in cifar10 cifar100 svhn
 #  do
-#    for adv in FGSM BIM DeepFool CWL2
+#    for adv in FGSM BIM DeepFool CWL2 PGD100
 #    do
 #      python /home/bwojcik/vae_layers_detector/ADV_Samples.py --dataset $dataset --net_type $model --adv_type $adv
 #    done
@@ -138,28 +138,21 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #    done
 #done
 #=================================================================================================================
-#for ae_type in wae ae waegan vae; do
-#    python -u /home/bwojcik/vae_layers_detector/ADV_generate_feature_importances.py --latent --ae_type $ae_type /mnt/users/bwojcik/local/vae_layers_detector
-#    python -u /home/bwojcik/vae_layers_detector/ADV_generate_feature_importances.py --ae_type $ae_type /mnt/users/bwojcik/local/vae_layers_detector
-#done
+for ae_type in wae; do
+   python -u /home/bwojcik/vae_layers_detector/ADV_generate_feature_importances.py --latent --ae_type $ae_type /mnt/users/bwojcik/local/vae_layers_detector
+   python -u /home/bwojcik/vae_layers_detector/ADV_generate_feature_importances.py --ae_type $ae_type /mnt/users/bwojcik/local/vae_layers_detector
+done
 #=================================================================================================================
-#for ae_type in wae ae waegan vae; do
-#    for model in resnet densenet; do
-#        for dataset in cifar10 cifar100 svhn; do
-#            python -u /home/bwojcik/vae_layers_detector/ADV_visualise_attack_iteration.py /mnt/users/bwojcik/local/vae_layers_detector/${dataset}_${model}_deep_${ae_type}_*
-#        done
-#    done
-#done
+python -u /home/bwojcik/vae_layers_detector/ADV_examine_featuremaps.py
 #=================================================================================================================
-#python -u /home/bwojcik/vae_layers_detector/ADV_examine_featuremaps.py
-#=================================================================================================================
-#for model in resnet densenet; do
-#  for dataset in cifar10 cifar100 svhn; do
-#    for adv in PGD100; do
-#      python /home/bwojcik/vae_layers_detector/ADV_Samples.py --dataset $dataset --net_type $model --adv_type $adv
-#    done
-#  done
-#done
+# for ae_type in wae ae waegan vae; do
+for ae_type in wae; do
+   for model in resnet densenet; do
+       for dataset in cifar10 cifar100 svhn; do
+           python -u /home/bwojcik/vae_layers_detector/ADV_visualise_attack_iteration.py /mnt/users/bwojcik/local/vae_layers_detector/${dataset}_${model}_deep_${ae_type}_*_150
+       done
+   done
+done
 #=================================================================================================================
 # rerun for PGD100
 #RUNS=5
@@ -257,18 +250,37 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #   done
 # done
 #=================================================================================================================
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known FGSM --jobs 30 --model LR .
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known FGSM --jobs 30 --model LR --latent .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known FGSM --jobs 30 --model LR .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known FGSM --jobs 30 --model LR --latent .
 
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known BIM --jobs 30 --model LR .
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known BIM --jobs 30 --model LR --latent .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known BIM --jobs 30 --model LR .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known BIM --jobs 30 --model LR --latent .
 
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known DeepFool --jobs 30 --model LR .
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known DeepFool --jobs 30 --model LR --latent .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known DeepFool --jobs 30 --model LR .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known DeepFool --jobs 30 --model LR --latent .
 
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known CWL2 --jobs 30 --model LR .
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known CWL2 --jobs 30 --model LR --latent .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known CWL2 --jobs 30 --model LR .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known CWL2 --jobs 30 --model LR --latent .
 
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known PGD100 --jobs 30 --model LR .
-python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known PGD100 --jobs 30 --model LR --latent .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known PGD100 --jobs 30 --model LR .
+# python -u /home/bwojcik/vae_layers_detector/ADV_known_unknown_correlation.py --adv_known PGD100 --jobs 30 --model LR --latent .
+#=================================================================================================================
+# for PGD strength experiment
+# for model in resnet; do
+#  for dataset in cifar10; do
+#    for adv in PGD10 PGD20 PGD30 PGD40 PGD50 PGD60 PGD70 PGD80 PGD90 PGD100 PGD110 PGD120 PGD130 PGD140 PGD150 PGD160 PGD170 PGD180 PGD190 PGD200; do
+#      python /home/bwojcik/vae_layers_detector/ADV_Samples.py --dataset $dataset --net_type $model --adv_type $adv
+#    done
+#  done
+# done
+#=================================================================================================================
+# for model in resnet; do
+#  for dataset in cifar10; do
+#    for adv in PGD10 PGD20 PGD30 PGD40 PGD50 PGD60 PGD70 PGD80 PGD90 PGD100 PGD110 PGD120 PGD130 PGD140 PGD150 PGD160 PGD170 PGD180 PGD190 PGD200; do
+#      python -u /home/bwojcik/vae_layers_detector/ADV_train_featuremaps_AE.py --runs 1 --dataset $dataset --dataroot /mnt/users/bwojcik/local/.datasets --net_type $model --ae_type wae --adv_type $adv
+#    done
+#  done
+# done
+#=================================================================================================================
+# python -u /home/bwojcik/vae_layers_detector/ADV_increasing_strength_performance.py cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150_0
 #=================================================================================================================

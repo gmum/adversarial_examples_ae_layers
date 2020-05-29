@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 # noinspection PyUnresolvedReferences
 from matplotlib.pyplot import close
 from scipy.stats import describe
+from itertools import cycle
 
 colors = ['green', 'lime', 'seagreen', 'forestgreen',
           'red', 'magenta', 'cyan', 'blue',
@@ -14,9 +15,10 @@ colors = ['green', 'lime', 'seagreen', 'forestgreen',
           'black']
 
 # runs_regex = re.compile(r'.*_epochs_\d+$')
-runs_regex = re.compile(r'.*_(wae|ae)_.*_epochs_\d+$')
+# runs_regex = re.compile(r'.*_(wae|ae|vae|waegan)_.*_epochs_\d\d\d$')
+runs_regex = re.compile(r'.*_(wae)_.*_epochs_\d\d\d_0$')
 
-adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2']
+adv_types = ['FGSM', 'BIM', 'DeepFool', 'CWL2', 'PGD100']
 
 
 def main():
@@ -102,8 +104,8 @@ def main():
             for i in range(int(n_features / 2)):
                 f1_i = i * 2
                 f2_i = f1_i + 1
-                fig, ax = plt.subplots(figsize=(16, 9))
-                c_iter = iter(colors)
+                fig, ax = plt.subplots(figsize=(16 * len(adv_types), 9 * len(labels)))
+                c_iter = cycle(colors)
                 for dataset_name in datasets_keys:
                     processed_dataset = datasets[dataset_name]
                     adv_xs = processed_dataset[:num_samples, f1_i]
@@ -122,9 +124,9 @@ def main():
         num_samples = 500
         for smp_type in ['adv', 'noisy']:
             plot_filename = f'{str(run_dir)}/{smp_type}_scatter.png'
-            fig, axis = plt.subplots(int(n_features / 2), len(adv_types), figsize=(48, 27))
+            fig, axis = plt.subplots(int(n_features / 2), len(adv_types), figsize=(16 * len(adv_types), 9 * len(labels)))
             kde_plot_filename = f'{str(run_dir)}/{smp_type}_kde.png'
-            kde_fig, kde_axis = plt.subplots(int(n_features / 2), len(adv_types), figsize=(48, 27))
+            kde_fig, kde_axis = plt.subplots(int(n_features / 2), len(adv_types), figsize=(16 * len(adv_types), 9 * len(labels)))
             for i in range(int(n_features / 2)):
                 f1_i = i * 2
                 f2_i = f1_i + 1
@@ -138,6 +140,7 @@ def main():
                     axis[i, j].scatter(adv_xs, adv_ys, color='red' if smp_type == 'adv' else 'gold')
                     axis[i, j].scatter(clean_xs, clean_ys, color='green', alpha=0.75)
                     axis[i, j].set_title(f'{adv_type} on layer {labels[i]}')
+                    axis[i, j].locator_params(nbins=5)
                     # kde
                     # kde_axis[i, j].scatter(clean_xs, clean_ys, color='white', alpha=0.2)
                     # kde_axis[i, j].scatter(adv_xs, adv_ys, color='red' if smp_type == 'adv' else 'gold', alpha=0.2)
@@ -148,6 +151,7 @@ def main():
                     # sns.kdeplot(adv_xs, adv_ys, cmap='Reds' if smp_type == 'adv' else 'Oranges', ax=kde_axis[i, j])
                     # sns.kdeplot(clean_xs, clean_ys, cmap='Greens', ax=kde_axis[i, j])
                     kde_axis[i, j].set_title(f'{adv_type} on layer {labels[i]}')
+                    kde_axis[i, j].locator_params(nbins=5)
             print(f'Writing {plot_filename}')
             fig.savefig(plot_filename, bbox_inches='tight')
             close(fig)
@@ -160,9 +164,9 @@ def main():
 
 if __name__ == '__main__':
     sns.set()
-    SMALL_SIZE = 14
-    MEDIUM_SIZE = 18
-    BIGGER_SIZE = 22
+    SMALL_SIZE = 28
+    MEDIUM_SIZE = 30
+    BIGGER_SIZE = 42
     plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
     plt.rc('axes', titlesize=BIGGER_SIZE)  # fontsize of the axes title
     plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels

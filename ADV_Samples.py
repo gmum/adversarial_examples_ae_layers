@@ -17,6 +17,7 @@ import lib.adversary as adversary
 import models
 import models.densenet
 from adv_attacks import pgd_linf
+import re
 
 parser = argparse.ArgumentParser(description='PyTorch code: Mahalanobis detector')
 parser.add_argument('--batch_size', type=int, default=200, metavar='N', help='batch size for data loader')
@@ -26,7 +27,7 @@ parser.add_argument('--outf', default='./adv_output/', help='folder to output re
 parser.add_argument('--num_classes', type=int, default=10, help='the # of classes')
 parser.add_argument('--net_type', required=True, help='resnet | densenet')
 parser.add_argument('--gpu', type=int, default=0, help='gpu index')
-parser.add_argument('--adv_type', required=True, help='FGSM | BIM | DeepFool | CWL2 | PGD100')
+parser.add_argument('--adv_type', required=True, help='FGSM | BIM | DeepFool | CWL2 | PGD100 | PGD')
 args = parser.parse_args()
 print(args)
 
@@ -41,8 +42,11 @@ def main():
     # check the in-distribution dataset
     if args.dataset == 'cifar100':
         args.num_classes = 100
-    if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+    if args.adv_type == 'FGSM':
         adv_noise = 0.05
+    elif args.adv_type.startswith('PGD'):
+        adv_noise = 0.05
+        pgd_iters = int(re.match('PGD(\d+)', args.adv_type).group(1))
     elif args.adv_type == 'BIM':
         adv_noise = 0.01
     elif args.adv_type == 'DeepFool':
@@ -71,7 +75,7 @@ def main():
         min_pixel = -1.98888885975
         max_pixel = 2.12560367584
         if args.dataset == 'cifar10':
-            if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+            if args.adv_type == 'FGSM' or args.adv_type.startswith('PGD'):
                 random_noise_size = 0.21 / 4
             elif args.adv_type == 'BIM':
                 random_noise_size = 0.21 / 4
@@ -80,7 +84,7 @@ def main():
             elif args.adv_type == 'CWL2':
                 random_noise_size = 0.03 / 2
         elif args.dataset == 'cifar100':
-            if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+            if args.adv_type == 'FGSM' or args.adv_type.startswith('PGD'):
                 random_noise_size = 0.21 / 8
             elif args.adv_type == 'BIM':
                 random_noise_size = 0.21 / 8
@@ -89,7 +93,7 @@ def main():
             elif args.adv_type == 'CWL2':
                 random_noise_size = 0.06 / 5
         else:
-            if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+            if args.adv_type == 'FGSM' or args.adv_type.startswith('PGD'):
                 random_noise_size = 0.21 / 4
             elif args.adv_type == 'BIM':
                 random_noise_size = 0.21 / 4
@@ -106,7 +110,7 @@ def main():
         min_pixel = -2.42906570435
         max_pixel = 2.75373125076
         if args.dataset == 'cifar10':
-            if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+            if args.adv_type == 'FGSM' or args.adv_type.startswith('PGD'):
                 random_noise_size = 0.25 / 4
             elif args.adv_type == 'BIM':
                 random_noise_size = 0.13 / 2
@@ -115,7 +119,7 @@ def main():
             elif args.adv_type == 'CWL2':
                 random_noise_size = 0.05 / 2
         elif args.dataset == 'cifar100':
-            if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+            if args.adv_type == 'FGSM' or args.adv_type.startswith('PGD'):
                 random_noise_size = 0.25 / 8
             elif args.adv_type == 'BIM':
                 random_noise_size = 0.13 / 4
@@ -124,7 +128,7 @@ def main():
             elif args.adv_type == 'CWL2':
                 random_noise_size = 0.05 / 2
         else:
-            if args.adv_type == 'FGSM' or args.adv_type == 'PGD100':
+            if args.adv_type == 'FGSM' or args.adv_type.startswith('PGD'):
                 random_noise_size = 0.25 / 4
             elif args.adv_type == 'BIM':
                 random_noise_size = 0.13 / 2
@@ -231,8 +235,8 @@ def main():
             adv_data = adv_data.cuda()
         elif args.adv_type == 'CWL2':
             _, adv_data = adversary.cw(model, data.data.clone(), target.data.cpu(), 1.0, 'l2', crop_frac=1.0)
-        elif args.adv_type == 'PGD100':
-            perturbation = pgd_linf(model, data, target, adv_noise, 1e-2, 100)
+        elif args.adv_type.startswith('PGD'):
+            perturbation = pgd_linf(model, data, target, adv_noise, 1e-2, pgd_iters)
             adv_data = data + perturbation
         else:
             adv_data = torch.add(inputs.data, adv_noise, gradient)

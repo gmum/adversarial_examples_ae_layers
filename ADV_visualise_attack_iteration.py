@@ -16,10 +16,11 @@ from ADV_train_featuremaps_AE import build_ae_for_size
 from lib import adversary
 from models.vae import ConvVAE
 from models.wae import ConvWAE
+from adv_attacks import pgd_linf
 
-adv_types = ['FGSM', 'BIM', 'DeepFool']
+adv_types = ['FGSM', 'BIM', 'DeepFool', 'PGD100']
 
-runs_regex = re.compile(r'(\w*)_(\w*)_deep_(wae|ae|vae|waegan)_.*')
+runs_regex = re.compile(r'(\w*)_(\w*)_deep_(wae|ae|vae|waegan)_.*?_\d\d\d$')
 
 
 def main():
@@ -237,6 +238,15 @@ def main():
                                                         args.num_classes, step_size=adv_noise, train_mode=False)
                     adv_example = adv_example.cuda()
                     adv_data[i] = adv_example[0]
+            elif adv_type.startswith('PGD'):
+                pgd_iters = int(re.match('PGD(\d+)', adv_type).group(1))
+                adv_noise_base = 0.05
+                adv_data = inputs
+                for i, adv_noise in enumerate(np.linspace(0.0, adv_noise_base * 2, samples_iterate)):
+                    sample_x_expanded = sample_x.expand(2, -1, -1, -1)
+                    sample_y_expanded = sample_y.expand(2)
+                    perturbation = pgd_linf(model, sample_x_expanded, sample_y_expanded, adv_noise, 1e-2, 100)
+                    adv_data[i] = sample_x_expanded[0] + perturbation[0]
             else:
                 raise ValueError(f'Unsupported adv_type value: {adv_type}')
             y_adv, adv_feature_list = model.feature_list(adv_data)
@@ -306,6 +316,9 @@ def main():
             kde_ax[j, l].grid(True)
             ax[j, l].set_title(f'{adv_type} on layer {labels[j]}')
             kde_ax[j, l].set_title(f'{adv_type} on layer {labels[j]}')
+            ax[j, l].locator_params(nbins=5)
+            kde_ax[j, l].locator_params(nbins=5)
+
     print(f'Writing {plot_filename}')
     fig.savefig(plot_filename, bbox_inches='tight')
     close(fig)
@@ -318,9 +331,9 @@ def main():
 
 if __name__ == '__main__':
     sns.set()
-    SMALL_SIZE = 14
-    MEDIUM_SIZE = 18
-    BIGGER_SIZE = 22
+    SMALL_SIZE = 28
+    MEDIUM_SIZE = 30
+    BIGGER_SIZE = 42
     plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
     plt.rc('axes', titlesize=BIGGER_SIZE)  # fontsize of the axes title
     plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels

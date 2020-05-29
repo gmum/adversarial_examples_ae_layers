@@ -31,8 +31,9 @@ def main():
             num_layers = 4 if model == 'densenet' else 5
             features_per_layer = None
             for file in args.runs_dir.iterdir():
-                if re.match(f'{dataset}_{model}_deep_{args.ae_type}_(.*)', file.name):
+                if file.is_dir() and re.match(f'{dataset}_{model}_deep_{args.ae_type}_(.*?)_\d\d\d$', file.name):
                     dir_name = file.name
+                    print(f'Using: {str(file)}')
                     break
             else:
                 raise FileNotFoundError(f'Missing results file for: {model}/{dataset}/{args.ae_type}')
@@ -102,9 +103,9 @@ def main():
 
 if __name__ == '__main__':
     seaborn.set()
-    SMALL_SIZE = 14
-    MEDIUM_SIZE = 18
-    BIGGER_SIZE = 22
+    SMALL_SIZE = 18
+    MEDIUM_SIZE = 22
+    BIGGER_SIZE = 26
     plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
     plt.rc('axes', titlesize=BIGGER_SIZE)  # fontsize of the axes title
     plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
