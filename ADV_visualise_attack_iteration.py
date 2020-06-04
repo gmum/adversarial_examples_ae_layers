@@ -20,7 +20,8 @@ from adv_attacks import pgd_linf
 
 adv_types = ['FGSM', 'BIM', 'DeepFool', 'PGD100']
 
-runs_regex = re.compile(r'(\w*)_(\w*)_deep_(wae|ae|vae|waegan)_.*?_\d\d\d$')
+# runs_regex = re.compile(r'(\w*)_(\w*)_deep_(wae|ae|vae|waegan)_.*?_\d\d\d$')
+runs_regex = re.compile(r'(\w*)_(\w*)_deep_(wae)_.*?_\d\d\d_\d$')
 
 
 def main():

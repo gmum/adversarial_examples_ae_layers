@@ -44,13 +44,13 @@ cd /mnt/users/bwojcik/local/vae_layers_detector || exit 0
 #=================================================================================================================
 # train final detector with mean and stddev
 # latent supervised
-#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC svhn_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
 
-#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
-#python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar10_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC cifar100_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
+python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --latent --model SVC svhn_densenet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
 # reduced supervised
 #python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --model LR cifar10_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
 #python -u /home/bwojcik/vae_layers_detector/ADV_train_detector_final.py --model LR cifar100_resnet_deep_wae_arch_\[128_128_128\]_bn_False_latent_64_lamb_0_0001_lr_0_001_bs_100_epochs_150
@@ -149,7 +149,7 @@ python -u /home/bwojcik/vae_layers_detector/ADV_examine_featuremaps.py
 for ae_type in wae; do
    for model in resnet densenet; do
        for dataset in cifar10 cifar100 svhn; do
-           python -u /home/bwojcik/vae_layers_detector/ADV_visualise_attack_iteration.py /mnt/users/bwojcik/local/vae_layers_detector/${dataset}_${model}_deep_${ae_type}_*_150
+           python -u /home/bwojcik/vae_layers_detector/ADV_visualise_attack_iteration.py /mnt/users/bwojcik/local/vae_layers_detector/${dataset}_${model}_deep_${ae_type}_*_150_0
        done
    done
 done
