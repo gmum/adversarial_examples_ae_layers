@@ -1,6 +1,6 @@
-# Code for paper: ""
+# Adversarial Examples Detection and Analysis with Layer-wise Autoencoders
 
-This project is for the paper "[Adversarial Examples Detection and Analysis with Layer-wise Autoencoders]()". It has been forked from: [deep_Mahalanobis_detector](https://github.com/pokaxpoka/deep_Mahalanobis_detector).
+This repository contains the code for paper "[Adversarial Examples Detection and Analysis with Layer-wise Autoencoders](https://arxiv.org/abs/2006.10013)". It has been forked from: [deep_Mahalanobis_detector](https://github.com/pokaxpoka/deep_Mahalanobis_detector). The code for the algorithm from the "odd odds" paper is from [the repo linked in that paper](https://github.com/yk/icml19_public).
 
 ## Preliminaries
 
